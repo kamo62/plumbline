@@ -1,38 +1,39 @@
 # Plumbline
 
-Plumbline is an engineering-practices application. The package, CLI and image are
-now named `plumbline` (version 0.1.0). Phase 1 foundations are in progress; remaining
-Phase 0 verification gaps are recorded in the local implementation plan.
-Phase 2c is the target stopping point, not the current completion status.
+Plumbline is an open-source, self-hosted engineering practice tool for Azure
+DevOps, GitLab, GitHub and Bitbucket Cloud. It brings repository controls, code
+review, CI health, testing and security evidence into one place to help teams
+understand and improve how they build software.
 
-An open-source, self-hosted project for understanding software delivery performance
-and engineering maturity across repositories, projects and teams. Its focus is
-holistic DORA reporting: delivery throughput, stability and the engineering
-capabilities that support sustainable improvement, rather than a score for any
-single platform.
+The application provides a CLI, a FastAPI service, a web UI and JSON/Excel reports,
+with SQLite and PostgreSQL storage. The package, CLI and image are named
+`plumbline`; application settings use the `PLUMBLINE_` prefix.
 
-The application provides a CLI, a FastAPI service and web dashboard, report
-generation and a SQLite/PostgreSQL storage foundation. Required storage across
-all run paths is still being integrated.
+## Provider support and project status
 
-## Reporting scope and current implementation
+| Provider | Current status |
+| --- | --- |
+| Azure DevOps | Collection implemented; live API verification remains outstanding |
+| GitLab | Planned |
+| GitHub | Planned |
+| Bitbucket Cloud | Planned |
+| Synthetic dataset | Available for diagnostics and development; deliberately includes incomplete evidence |
 
-A useful DORA view connects production deployment frequency, change lead time,
-change failure rate and failed-deployment recovery time with their supporting
-evidence. Deployment rework and wider reliability context help explain those
-outcomes. Quality assurance, pipeline automation, security practices and
-collaboration provide complementary maturity signals; they do not replace delivery
-outcomes or measure individual developer productivity.
+Plumbline is under active development at version 0.1.0. Accounts, saved connections,
+worker execution and the new UI are implemented foundations with integration and
+verification work still open. Organisation mapping, scoring v2 and immutable
+assessments remain planned. Required storage across all entry points is still
+being integrated.
 
-The reporting scope is platform-independent. The currently implemented collector
-is **Azure DevOps only**. Other source-control, deployment, incident-management and
-observability integrations are not implemented. Describing the broader scope does
-not imply that the application already collects or calculates every DORA metric.
+Engineering-practice assessments are the current focus. DORA delivery outcomes
+require production deployment and incident evidence; build success, pipeline
+frequency and collection-run statistics do not establish those outcomes. Scores
+are configurable assessment signals, not a certification or a measure of
+individual developer productivity.
 
-The project is under development. Maturity scores are a configurable assessment
-model, not a certification. Grafana dashboards have been removed. Collection-run
-counts and durations are not validated DORA measurements.
-Use synthetic data and disposable credentials while evaluating the application.
+See the [public provider API architecture](docs/provider-api-architecture.md) for
+the evidence available from the planned providers and its limits. Segments and
+Grafana are excluded from the current product direction.
 
 ## Available capabilities
 
@@ -75,8 +76,13 @@ plumbline collect-raw --project "YOUR_PROJECT_NAME_HERE" --maturity
 plumbline collect-raw --projects "PROJECT_ONE" --projects "PROJECT_TWO" --maturity
 ```
 
-Visit <http://localhost:8000/ui/> for the dashboard, `/docs` for the API reference,
-and `/healthz` for health. Reports are written under the ignored `exports/` directory.
+For account bootstrap, frontend build and worker operation, follow the
+[operations guide](docs/operations.md) and [frontend instructions](frontend/README.md).
+The API queues UI runs; a separate worker must be running to process them.
+
+Visit <http://localhost:8000/ui/> for the application. `/docs` provides the
+authenticated API reference and `/healthz` provides health status. Reports are
+written under the ignored `exports/` directory.
 
 Collection uses the full assessment window. Removed segment, delta, minimal and
 execution-profile options are rejected. Each run owns a UUID-named output folder.
@@ -142,7 +148,9 @@ they cannot reconstruct historical evidence that the source no longer exposes.
 
 - Documentation uses `YOUR_..._HERE` placeholders. They are not usable credentials.
 - Automated tests use synthetic accounts, tokens, IDs, timestamps and metrics.
-  Email examples use the reserved `example.com` domain. No collected reports are bundled.
+  Email examples use the reserved `example.com` domain. Sanitised historical
+  aggregate examples are included under [samples/](samples/README.md); raw
+  collected reports are excluded.
 - Manual organisation mappings arrive in Phase 2. Segment assessment and
   security-group entitlement collection have been removed.
 - No projects or metrics are exempted by default. Configure your own exemptions locally
@@ -162,6 +170,17 @@ checks. Bootstrap and worker setup, encrypted connection keys, backup and rotati
 are described in [operations](docs/operations.md). Keep the development service on
 loopback. Integrated security review and production deployment checks remain open.
 Never commit completed environment files, keys, exports or private organisation data.
+
+## Documentation and examples
+
+- [Operations](docs/operations.md): accounts, worker processes, connection keys and backups.
+- [Frontend development](frontend/README.md): build and development commands.
+- [Public provider API architecture](docs/provider-api-architecture.md): conceptual evidence diagram and vendor references.
+- [Sanitised sample data](samples/README.md): four historical runs with 270 metric records across three projects and nine repositories.
+- [Run request templates](samples/run-requests.json): example collection requests with placeholder connection IDs.
+
+Historical samples are aggregate extracts, not raw API responses or validated
+Plumbline v2 assessments. Request templates do not replay those samples.
 
 ## Tests
 

@@ -2,6 +2,10 @@
 
 ## 0.1.0 (implementation in progress)
 
+- Updated the README for engineering-practices scope, provider availability and
+  sanitised examples. Declared HTTP test-client and OIDC dependencies required
+  to collect the existing test suite in a fresh environment.
+
 - Began the independent migration to Plumbline through the Phase 2c target.
 - Removed Grafana dashboards and provisioning. Development Compose uses plain
   PostgreSQL in a separate volume; existing database volumes remain untouched.
