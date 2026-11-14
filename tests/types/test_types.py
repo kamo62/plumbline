@@ -1,5 +1,5 @@
 import pytest
-from devops_metrics.types import RawProjectData
+from plumbline.types import RawProjectData
 
 
 def test_raw_project_data_instantiation():

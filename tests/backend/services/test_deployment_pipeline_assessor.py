@@ -1,5 +1,5 @@
 import pytest
-from src.devops_metrics.backend.services.assessors.deployment_pipeline import DeploymentPipelineAssessor
+from plumbline.backend.services.assessors.deployment_pipeline import DeploymentPipelineAssessor
 from unittest.mock import Mock
 from datetime import datetime, timezone, timedelta
 
@@ -29,14 +29,14 @@ def test_assess_no_builds(assessor):
 def test_assess_all_builds_succeed(assessor):
     now = datetime.now(timezone.utc)
     builds = [
-        {'id': '1', 'result': 'succeeded', 'finishTime': now.isoformat(), 'startTime': (now - timedelta(minutes=10)).isoformat(), 'repository': {'id': 'repo1', 'name': 'Repo1'}},
-        {'id': '2', 'result': 'succeeded', 'finishTime': (now - timedelta(days=1)).isoformat(), 'startTime': (now - timedelta(days=1, minutes=10)).isoformat(), 'repository': {'id': 'repo1', 'name': 'Repo1'}},
+        {'id': '1', 'result': 'succeeded', 'finishTime': now.isoformat(), 'startTime': (now - timedelta(minutes=10)).isoformat(), 'sourceBranch': 'refs/heads/main', 'reason': 'individualCI', 'repository': {'id': 'repo1', 'name': 'Repo1'}},
+        {'id': '2', 'result': 'succeeded', 'finishTime': (now - timedelta(days=1)).isoformat(), 'startTime': (now - timedelta(days=1, minutes=10)).isoformat(), 'sourceBranch': 'refs/heads/main', 'reason': 'individualCI', 'repository': {'id': 'repo1', 'name': 'Repo1'}},
     ]
     build_data = {
         '1': {'steps': [{'name': 'Build'}, {'name': 'Deploy'}]},
         '2': {'steps': [{'name': 'Build'}, {'name': 'Test'}, {'name': 'Deploy'}]},
     }
-    repo_data = {'id': 'repo1'}
+    repo_data = {'id': 'repo1', 'defaultBranch': 'refs/heads/main'}
     result = assessor.assess(repo_data, builds, build_data, "TestProject")
     assert result['metrics']['pipeline_stability'] == 100.0
     assert 'deployment_frequency' in result['metrics']
@@ -132,14 +132,14 @@ def test_calculate_deployment_frequency_edge_cases(assessor):
     # One deployment
     now = datetime.now(timezone.utc)
     builds = [
-        {'finishTime': now.isoformat(), 'result': 'succeeded'},
+        {'finishTime': now.isoformat(), 'result': 'succeeded', 'sourceBranch': 'refs/heads/main', 'reason': 'individualCI'},
     ]
-    assert assessor._calculate_deployment_frequency(builds) == 1.0
+    assert assessor._calculate_deployment_frequency(builds, 'refs/heads/main') == 1.0
     # Multiple deployments in 30 days
     builds = [
-        {'finishTime': (now - timedelta(days=i)).isoformat(), 'result': 'succeeded'} for i in range(5)
+        {'finishTime': (now - timedelta(days=i)).isoformat(), 'result': 'succeeded', 'sourceBranch': 'refs/heads/main', 'reason': 'individualCI'} for i in range(5)
     ]
-    freq = assessor._calculate_deployment_frequency(builds)
+    freq = assessor._calculate_deployment_frequency(builds, 'refs/heads/main')
     assert freq > 0.0
 
 def test_calculate_build_times_edge_cases(assessor):

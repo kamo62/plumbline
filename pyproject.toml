@@ -3,11 +3,11 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dora-maturity-reporting"
-version = "0.0.1"
+name = "plumbline"
+dynamic = ["version"]
 description = "Azure DevOps maturity assessment and reporting"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 license = "MIT"
 authors = [
     { name = "Kamogelo Mashishi" }
@@ -27,6 +27,9 @@ dependencies = [
     "tqdm>=4.60.0",
     "PyYAML>=6.0.0",
     "sqlmodel>=0.0.16",
+    "cryptography>=46.0.0",
+    "httpx>=0.28,<1",
+    "PyJWT[crypto]>=2.10,<3",
     "sqlalchemy>=2.0.0",
     "alembic>=1.13.1",
     "psycopg[binary]>=3.1.8",
@@ -37,10 +40,13 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "httpx2",
     "pytest-cov>=6.0.0",
     "pytest-asyncio>=0.23.5",
     "coverage>=7.4.1",
     "mypy>=1.8.0",
+    "ruff>=0.11.0",
+    "playwright>=1.65.0",
     "black>=24.2.0",
     "isort>=5.13.2",
     "flake8>=7.0.0",
@@ -53,20 +59,24 @@ dev = [
 ]
 
 [project.scripts]
-devops-metrics = "devops_metrics.cli:app"
+plumbline = "plumbline.cli:app"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 include-package-data = true
 
+[tool.setuptools.dynamic]
+version = {attr = "plumbline.__version__"}
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"devops_metrics.api" = ["ui/*.html", "ui/*.css", "ui/*.js"]
+"plumbline.api" = ["ui/*.html", "ui/*.css", "ui/*.js"]
+"plumbline.config" = ["*.yaml"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -81,9 +91,15 @@ warn_unreachable = true
 strict_optional = true
 exclude = ['build/']
 
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
-addopts = "-v --no-cov-on-fail --cov=src/devops_metrics --cov-config=.coveragerc --cov-report=term-missing --cov-report=xml --cov-report=html -p no:warnings"
+addopts = "-v --no-cov-on-fail --cov=plumbline --cov-config=.coveragerc --cov-report=term-missing --cov-report=xml --cov-report=html -p no:warnings"
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"

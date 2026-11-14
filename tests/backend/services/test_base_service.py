@@ -2,7 +2,7 @@
 
 import pytest
 from typing import Dict, Any, Optional
-from devops_metrics.backend.services.base_service import MetricsService
+from plumbline.backend.services.base_service import MetricsService
 
 
 def test_cannot_instantiate_abstract_base():

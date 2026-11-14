@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 import pytest
-from devops_metrics.backend.services.metric_calculators import (
+from plumbline.backend.services.metric_calculators import (
     BuildMetrics,
     PRMetrics,
     CoverageMetrics,

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Plumbline runs</title><link rel="stylesheet" href="styles.css"></head>
+<body><header><h1>Plumbline</h1><p>Azure DevOps collection runs</p></header>
+<main>
+<section><h2>Connection</h2><label for="api-key">API key for non-local access</label><input id="api-key" type="password" autocomplete="off"><p>The key stays in this page while it is open.</p><p id="health" role="status">Checking database…</p></section>
+<section><h2>Start a run</h2><form id="run-form">
+<label for="org">Organisation (optional)</label><input id="org">
+<label><input type="checkbox" id="all-projects" checked> All projects</label>
+<div id="project-field" hidden><label for="project">Add a project</label><input id="project" list="projects"><datalist id="projects"></datalist><button type="button" id="add-project">Add project</button><button type="button" id="load-projects">Load projects from Azure DevOps</button><label for="selected-projects">Selected projects (one name per line)</label><textarea id="selected-projects" rows="4"></textarea><small id="project-message">Enter names above or add projects from the list.</small></div>
+<label for="run-label">Run label (optional)</label><input id="run-label" maxlength="100" placeholder="Generated if blank">
+<label><input type="checkbox" id="write-files" checked> Write files</label>
+<label><input type="checkbox" id="write-db"> Write to database</label>
+<label><input type="checkbox" id="maturity" checked> Include maturity assessment</label>
+<button type="submit">Start collection</button><p id="run-message" role="status"></p></form></section>
+<section><h2>Recent runs</h2><div class="controls"><button id="refresh" type="button">Refresh</button><label><input type="checkbox" id="auto-refresh" checked> Auto-refresh</label><label for="status-filter">Status</label><select id="status-filter"><option value="">All</option><option>queued</option><option>running</option><option>succeeded</option><option>failed</option><option>cancelled</option></select><label for="search">Search labels</label><input id="search" type="search"></div><div id="runs" role="status"></div><div id="artifacts"></div></section>
+<section><h2>Project exemptions</h2><p>Editing a project preserves its existing repository rules.</p><form id="exemption-form"><label for="ex-project">Project</label><input id="ex-project" required><label for="ex-metrics">Exempt metrics, comma separated</label><input id="ex-metrics"><label for="ex-dimensions">Exempt dimensions, comma separated</label><input id="ex-dimensions"><label for="ex-owner">Owner</label><input id="ex-owner" required><label for="ex-reason">Reason</label><input id="ex-reason" required><label for="ex-effective">Effective date</label><input id="ex-effective" type="date" required><label for="ex-expiration">Expiration date (optional)</label><input id="ex-expiration" type="date"><button>Save exemption</button><button id="ex-new" type="button">Clear form</button><p id="ex-message" role="status"></p></form><div id="exemptions"></div></section>
+</main><script src="app.js"></script></body></html>

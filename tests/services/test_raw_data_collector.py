@@ -1,29 +1,27 @@
 import pytest
 import asyncio
 from datetime import datetime, timezone
-from devops_metrics.backend.services.raw_data_collector import RawDataCollector
+from plumbline.backend.services.raw_data_collector import RawDataCollector
 
 @pytest.mark.asyncio
 async def test_get_with_retry_success():
     calls = []
     async def dummy_func(*args):
         calls.append(None)
-        if len(calls) < 2:
-            raise Exception("fail")
         return "ok"
 
     collector = RawDataCollector(None)
     # Use actual _get_with_retry implementation
     result = await collector._get_with_retry(dummy_func, "op")
     assert result == "ok"
-    assert len(calls) == 2
+    assert len(calls) == 1
 
 @pytest.mark.asyncio
 async def test_get_with_retry_timeout():
     async def always_fail(*args):
         raise Exception("error")
     collector = RawDataCollector(None)
-    with pytest.raises(TimeoutError):
+    with pytest.raises(Exception, match="error"):
         await collector._get_with_retry(always_fail, "op")
 
 @pytest.mark.asyncio

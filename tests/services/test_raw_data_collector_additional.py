@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from devops_metrics.backend.services.raw_data_collector import RawDataCollector
+from plumbline.backend.services.raw_data_collector import RawDataCollector
 
 @pytest.mark.asyncio
 async def test_collect_metrics_delegates_to_collect_all_projects_raw_data():
@@ -44,7 +44,7 @@ async def test_collect_all_projects_raw_data_minimal_truncates(monkeypatch):
     # Stub collect_all_raw_data to return minimal structure
     async def fake_collect(project):
         return {
-            "project": {"name": project["name"], "id": project["id"]},
+            "project": {"name": project, "id": project},
             "repositories": [],
             "repository_data": {},
             "builds": [],
@@ -69,10 +69,10 @@ async def test_collect_all_projects_raw_data_skips_errors(monkeypatch):
             return projects
         return ()
     async def fake_collect(project):
-        if project["name"] == "bad":
+        if project == "bad":
             raise Exception("failed")
         return {
-            "project": {"name": project["name"], "id": project["id"]},
+            "project": {"name": project, "id": project},
             "repositories": [],
             "repository_data": {},
             "builds": [],

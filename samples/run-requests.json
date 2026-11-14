@@ -1,0 +1,20 @@
+{
+  "synthetic_all_projects": {
+    "connection_id": "YOUR_SYNTHETIC_CONNECTION_ID",
+    "all_projects": true,
+    "write_files": false,
+    "run_label": "Synthetic incomplete-evidence example"
+  },
+  "synthetic_selected_projects": {
+    "connection_id": "YOUR_SYNTHETIC_CONNECTION_ID",
+    "projects": ["Alpha", "Beta"],
+    "write_files": true,
+    "run_label": "Synthetic selected-project example"
+  },
+  "saved_ado_single_project": {
+    "connection_id": "YOUR_ADO_CONNECTION_ID",
+    "project": "YOUR_CONFIGURED_PROJECT",
+    "write_files": true,
+    "run_label": "Single-project collection example"
+  }
+}

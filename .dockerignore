@@ -60,4 +60,6 @@ rel_export.json
 .claude
 .codex
 .opencode
+DO-NOT-RUN
+DO NOT RUN
 .DS_Store

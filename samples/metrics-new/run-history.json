@@ -1,0 +1,46 @@
+[
+  {
+    "id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "status": "succeeded",
+    "run_label": "Historical sample 1",
+    "started_at": "2023-11-04T17:46:52.189750+00:00",
+    "finished_at": "2023-11-05T07:08:19.904736+00:00",
+    "completeness": null,
+    "assessment_status": "legacy_import_example",
+    "metrics_count": 61,
+    "fixture": "run-01.json"
+  },
+  {
+    "id": "c4d93c01-40ad-52b3-80f5-7694135e6996",
+    "status": "succeeded",
+    "run_label": "Historical sample 2",
+    "started_at": "2023-12-05T19:48:22.176461+00:00",
+    "finished_at": "2023-12-06T10:58:56.114008+00:00",
+    "completeness": null,
+    "assessment_status": "legacy_import_example",
+    "metrics_count": 61,
+    "fixture": "run-02.json"
+  },
+  {
+    "id": "3df48895-cb8b-587e-811d-74c11fdccd25",
+    "status": "succeeded",
+    "run_label": "Historical sample 3",
+    "started_at": "2024-01-04T19:02:00.263576+00:00",
+    "finished_at": "2024-01-05T12:35:08.984339+00:00",
+    "completeness": null,
+    "assessment_status": "legacy_import_example",
+    "metrics_count": 74,
+    "fixture": "run-03.json"
+  },
+  {
+    "id": "546ff9e1-e6d9-5247-bfac-3af360bddff9",
+    "status": "succeeded",
+    "run_label": "Historical sample 4",
+    "started_at": "2024-02-02T07:06:33.866889+00:00",
+    "finished_at": "2024-02-02T20:52:41.480989+00:00",
+    "completeness": null,
+    "assessment_status": "legacy_import_example",
+    "metrics_count": 74,
+    "fixture": "run-04.json"
+  }
+]

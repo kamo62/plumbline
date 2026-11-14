@@ -3,29 +3,10 @@ r"""Compare last month's and this month's metrics Excel exports.
 
 Generates CSVs of row-by-row changes and a concise Markdown summary.
 
-Inputs use generic local locations; no reports are bundled:
-  - Previous month: exports/previous/metrics_segments.xlsx
-                   exports/previous/metrics_maturity_assessment.xlsx
-  - Current month:  exports/current/metrics_segments.xlsx
-                   exports/current/metrics_maturity_assessment.xlsx
-
-Usage examples:
-  python scripts/compare_metrics.py
-  python scripts/compare_metrics.py \
-    --prev-segments exports/previous/metrics_segments.xlsx \
-    --curr-segments exports/current/metrics_segments.xlsx \
-    --prev-maturity exports/previous/metrics_maturity_assessment.xlsx \
-    --curr-maturity exports/current/metrics_maturity_assessment.xlsx
-
-Outputs:
- - <out_dir>/segments_changes.csv
- - <out_dir>/project_changes.csv
- - <out_dir>/maturity_assessment_changes.csv
- - <out_dir>/summary.md
-
-Notes:
- - Only uses Excel exports; does not read the large raw JSON.
- - Designed to be resilient to missing columns but expects standard sheets.
+Inputs default to exports/previous and exports/current maturity workbooks.
+Use --prev-maturity and --curr-maturity to select other workbooks.
+Optionally supply --prev-raw and --curr-raw to compare raw repository records by ID.
+Outputs are change CSVs and a Markdown summary.
 """
 
 from __future__ import annotations
@@ -36,7 +17,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 import pandas as pd
-from devops_metrics.config.access import checked_path
+from plumbline.config.access import checked_path
 
 
 def _ensure_out_dir(out_dir: Path) -> None:
@@ -85,7 +66,7 @@ def _compute_string_changes(df: pd.DataFrame, cols: List[str]) -> pd.DataFrame:
     for c in cols:
         p, q = f"{c}__prev", f"{c}__curr"
         if p in df.columns and q in df.columns:
-            df[f"{c}__changed"] = df[p].astype(str).fillna("") != df[q].astype(str).fillna("")
+            df[f"{c}__changed"] = df[p].fillna("").astype(str) != df[q].fillna("").astype(str)
     return df
 
 
@@ -93,6 +74,8 @@ def _finalize_status(df: pd.DataFrame, compare_cols: List[str]) -> pd.DataFrame:
     # Determine if any compare col changed
     changed_cols = []
     for c in compare_cols:
+        if c not in df.columns:
+            continue
         if c.endswith("__delta"):
             changed_cols.append(df[c].fillna(0) != 0)
         elif c.endswith("__changed"):
@@ -112,69 +95,6 @@ def _finalize_status(df: pd.DataFrame, compare_cols: List[str]) -> pd.DataFrame:
         for pp, cp, ch in zip(prev_present, curr_present, any_changed)
     ]
     return df
-
-
-def compare_segment_maturity(prev_path: Path, curr_path: Path) -> pd.DataFrame:
-    sheet = "Segment Maturity"
-    keys = ["Security Group Name"]
-    numeric = ["Maturity Score", "Number of Projects"]
-    strings = ["Maturity Level", "Maturity Label"]
-
-    prev = pd.read_excel(checked_path(prev_path), sheet_name=sheet)
-    curr = pd.read_excel(checked_path(curr_path), sheet_name=sheet)
-
-    # Validate required key columns
-    for k in keys:
-        if k not in prev.columns:
-            raise ValueError(f"Column '{k}' missing from {prev_path}")
-        if k not in curr.columns:
-            raise ValueError(f"Column '{k}' missing from {curr_path}")
-
-    merged, _ = _outer_join(prev, curr, keys)
-    merged = _compute_numeric_deltas(merged, numeric)
-    merged = _compute_string_changes(merged, strings)
-
-    compare_cols = [f"{c}__delta" for c in numeric] + [f"{c}__changed" for c in strings]
-    merged = _finalize_status(merged, compare_cols)
-
-    # Order columns for readability
-    front = keys + ["row_status"]
-    numeric_cols = sum(([[f"{c}__prev", f"{c}__curr", f"{c}__delta"] for c in numeric]), [])
-    string_cols = sum(([[f"{c}__prev", f"{c}__curr", f"{c}__changed"] for c in strings]), [])
-    other = [c for c in merged.columns if c not in front + numeric_cols + string_cols]
-    ordered = front + numeric_cols + string_cols + other
-    return merged[ordered].sort_values(keys)
-
-
-def compare_project_maturity(prev_path: Path, curr_path: Path) -> pd.DataFrame:
-    sheet = "Project Maturity"
-    keys = ["Project Name"]
-    numeric = ["Maturity Score", "Number of Repositories"]
-    strings = ["Maturity Level", "Maturity Label"]
-
-    prev = pd.read_excel(checked_path(prev_path), sheet_name=sheet)
-    curr = pd.read_excel(checked_path(curr_path), sheet_name=sheet)
-
-    # Validate required key columns
-    for k in keys:
-        if k not in prev.columns:
-            raise ValueError(f"Column '{k}' missing from {prev_path}")
-        if k not in curr.columns:
-            raise ValueError(f"Column '{k}' missing from {curr_path}")
-
-    merged, _ = _outer_join(prev, curr, keys)
-    merged = _compute_numeric_deltas(merged, numeric)
-    merged = _compute_string_changes(merged, strings)
-
-    compare_cols = [f"{c}__delta" for c in numeric] + [f"{c}__changed" for c in strings]
-    merged = _finalize_status(merged, compare_cols)
-
-    front = keys + ["row_status"]
-    numeric_cols = sum(([[f"{c}__prev", f"{c}__curr", f"{c}__delta"] for c in numeric]), [])
-    string_cols = sum(([[f"{c}__prev", f"{c}__curr", f"{c}__changed"] for c in strings]), [])
-    other = [c for c in merged.columns if c not in front + numeric_cols + string_cols]
-    ordered = front + numeric_cols + string_cols + other
-    return merged[ordered].sort_values(keys)
 
 
 def compare_maturity_assessment(prev_path: Path, curr_path: Path) -> pd.DataFrame:
@@ -217,14 +137,27 @@ def compare_maturity_assessment(prev_path: Path, curr_path: Path) -> pd.DataFram
     numeric_cols = sum(([[f"{c}__prev", f"{c}__curr", f"{c}__delta"] for c in numeric]), [])
     string_cols = sum(([[f"{c}__prev", f"{c}__curr", f"{c}__changed"] for c in strings]), [])
     other = [c for c in merged.columns if c not in front + numeric_cols + string_cols]
-    ordered = front + numeric_cols + string_cols + other
+    ordered = [c for c in front + numeric_cols + string_cols + other if c in merged.columns]
     return merged[ordered].sort_values(keys)
+
+
+def compare_raw_repositories(prev_path: Path, curr_path: Path) -> pd.DataFrame:
+    """Compare repository records by their source ID in raw Excel exports."""
+    prev = pd.read_excel(checked_path(prev_path), sheet_name="Repositories")
+    curr = pd.read_excel(checked_path(curr_path), sheet_name="Repositories")
+    for frame in (prev, curr):
+        if "id" not in frame or frame["id"].isna().any() or frame["id"].duplicated().any():
+            raise ValueError("Raw repository exports require unique, non-empty id values")
+    columns = sorted((set(prev.columns) | set(curr.columns)) - {"id"})
+    prev = prev.reindex(columns=["id", *columns])
+    curr = curr.reindex(columns=["id", *columns])
+    merged, _ = _outer_join(prev, curr, ["id"])
+    merged = _compute_string_changes(merged, columns)
+    return _finalize_status(merged, [f"{c}__changed" for c in columns]).sort_values("id")
 
 
 @dataclass
 class CompareInputs:
-    prev_segments: Path
-    curr_segments: Path
     prev_maturity: Path
     curr_maturity: Path
     out_dir: Path
@@ -232,18 +165,8 @@ class CompareInputs:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument(
-        "--prev-segments",
-        type=Path,
-        default=Path("exports/previous/metrics_segments.xlsx"),
-        help="Previous month segments Excel",
-    )
-    p.add_argument(
-        "--curr-segments",
-        type=Path,
-        default=Path("exports/current/metrics_segments.xlsx"),
-        help="Current month segments Excel",
-    )
+    p.add_argument("--prev-raw", type=Path, help="Previous raw Excel workbook")
+    p.add_argument("--curr-raw", type=Path, help="Current raw Excel workbook")
     p.add_argument(
         "--prev-maturity",
         type=Path,
@@ -267,8 +190,6 @@ def build_parser() -> argparse.ArgumentParser:
 
 def write_summary(
     out_dir: Path,
-    seg_df: pd.DataFrame,
-    proj_df: pd.DataFrame,
     mat_df: pd.DataFrame,
 ) -> None:
     def status_counts(df: pd.DataFrame) -> str:
@@ -293,42 +214,12 @@ def write_summary(
             dec[key_cols + [delta_col]].reset_index(drop=True),
         )
 
-    seg_inc, seg_dec = top_changes(
-        seg_df, ["Security Group Name"], "Maturity Score__delta"
-    )
-    proj_inc, proj_dec = top_changes(
-        proj_df, ["Project Name"], "Maturity Score__delta"
-    )
     mat_inc, mat_dec = top_changes(
         mat_df, ["Project", "Repository"], "Overall Score__delta"
     )
 
     md = []
     md.append("# Monthly Metrics Diff Summary")
-    md.append("")
-    md.append("## Segment Maturity")
-    md.append(f"Counts: {status_counts(seg_df)}")
-    if not seg_inc.empty:
-        md.append("")
-        md.append("Top increases (Maturity Score):")
-        md.extend([f"- {r['Security Group Name']}: +{r['Maturity Score__delta']:.2f}" for _, r in seg_inc.iterrows()])
-    if not seg_dec.empty:
-        md.append("")
-        md.append("Top decreases (Maturity Score):")
-        md.extend([f"- {r['Security Group Name']}: {r['Maturity Score__delta']:.2f}" for _, r in seg_dec.iterrows()])
-
-    md.append("")
-    md.append("## Project Maturity")
-    md.append(f"Counts: {status_counts(proj_df)}")
-    if not proj_inc.empty:
-        md.append("")
-        md.append("Top increases (Maturity Score):")
-        md.extend([f"- {r['Project Name']}: +{r['Maturity Score__delta']:.2f}" for _, r in proj_inc.iterrows()])
-    if not proj_dec.empty:
-        md.append("")
-        md.append("Top decreases (Maturity Score):")
-        md.extend([f"- {r['Project Name']}: {r['Maturity Score__delta']:.2f}" for _, r in proj_dec.iterrows()])
-
     md.append("")
     md.append("## Maturity Assessment (per repository)")
     md.append(f"Counts: {status_counts(mat_df)}")
@@ -353,14 +244,14 @@ def write_summary(
 def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
+    if bool(args.prev_raw) != bool(args.curr_raw):
+        parser.error("--prev-raw and --curr-raw must be supplied together")
     # Resolve out_dir default dynamically if not provided
     if args.out_dir is None:
         from datetime import datetime
         args.out_dir = Path("exports") / f"diffs_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     inputs = CompareInputs(
-        prev_segments=args.prev_segments,
-        curr_segments=args.curr_segments,
         prev_maturity=args.prev_maturity,
         curr_maturity=args.curr_maturity,
         out_dir=args.out_dir,
@@ -368,19 +259,18 @@ def main() -> None:
 
     _ensure_out_dir(checked_path(inputs.out_dir))
 
-    seg_changes = compare_segment_maturity(inputs.prev_segments, inputs.curr_segments)
-    proj_changes = compare_project_maturity(inputs.prev_segments, inputs.curr_segments)
     mat_changes = compare_maturity_assessment(inputs.prev_maturity, inputs.curr_maturity)
 
-    seg_changes.to_csv(inputs.out_dir / "segments_changes.csv", index=False)
-    proj_changes.to_csv(inputs.out_dir / "project_changes.csv", index=False)
     mat_changes.to_csv(inputs.out_dir / "maturity_assessment_changes.csv", index=False)
+    if args.prev_raw:
+        raw_changes = compare_raw_repositories(args.prev_raw, args.curr_raw)
+        raw_changes.to_csv(inputs.out_dir / "raw_repository_changes.csv", index=False)
 
-    write_summary(inputs.out_dir, seg_changes, proj_changes, mat_changes)
+    write_summary(inputs.out_dir, mat_changes)
 
     print(f"Wrote diffs to: {inputs.out_dir}")
-    print(" - segments_changes.csv")
-    print(" - project_changes.csv")
+    if args.prev_raw:
+        print(" - raw_repository_changes.csv")
     print(" - maturity_assessment_changes.csv")
     print(" - summary.md")
 

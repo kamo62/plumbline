@@ -1,11 +1,10 @@
 """Tests for maturity assessment exporter service"""
 
 import os
-from datetime import datetime
 import pytest
 from unittest.mock import AsyncMock
 import pandas as pd
-from devops_metrics.backend.services.maturity_assessment_exporter import MaturityAssessmentExporter
+from plumbline.backend.services.maturity_assessment_exporter import MaturityAssessmentExporter
 
 
 @pytest.fixture
@@ -225,3 +224,30 @@ def test_create_maturity_assessment_df(exporter, sample_assessment_data):
         "Repository", "Project", "Overall Score", "Overall Level",
         "Overall Label"
     ])
+
+
+def test_consolidated_workbook_labels_and_score_columns(exporter, tmp_path):
+    import json
+    from openpyxl import load_workbook
+
+    assessment = {"project_name": "Combined", "completeness": {"Beta": {"complete": False, "failures": ["denied"]}},
+                  "repositories": {
+                      "r1": {"name": "First", "project": {"name": "Alpha"},
+                             "overall": {"score": 0.7, "level": 4, "label": "Managed"},
+                             "quality_assurance": {"score": 0.5, "level": 3}},
+                      "r2": {"name": "Second", "project": {"name": "Beta"},
+                             "overall": {"score": 0.3, "level": 2, "label": "Developing"}},
+                  }}
+    paths = exporter.export_assessment(assessment, str(tmp_path / "assessment.xlsx"))
+    with open(paths["json"]) as stream:
+        assert json.load(stream) == assessment
+    workbook = load_workbook(paths["excel"], data_only=True)
+    sheet = workbook["Maturity Assessment"]
+    assert [sheet.cell(2, col).value for col in (1, 2)] == ["First", "Alpha"]
+    assert [sheet.cell(3, col).value for col in (1, 2)] == ["Second", "Beta"]
+    quality = list(workbook["Data Quality"].values)
+    assert quality[1][0:2] == ("Beta", "Partial") and "denied" in quality[1][2]
+    assert sheet.max_column == 13
+    assert sheet["F2"].fill.fill_type == "solid"
+    assert sheet["G2"].fill.fill_type is None
+    assert sheet["H3"].value is None and sheet["H3"].fill.fill_type is None

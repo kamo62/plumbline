@@ -1,5 +1,5 @@
 import pytest
-from src.devops_metrics.backend.services.assessors.quality_assurance import QualityAssuranceAssessor
+from plumbline.backend.services.assessors.quality_assurance import QualityAssuranceAssessor
 from unittest.mock import Mock
 from datetime import datetime, timezone
 

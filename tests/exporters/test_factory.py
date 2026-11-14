@@ -1,6 +1,6 @@
 import pytest
-from devops_metrics.exporters.factory import ExporterFactory
-from devops_metrics.exporters.base_exporter import BaseExporter
+from plumbline.exporters.factory import ExporterFactory
+from plumbline.exporters.base_exporter import BaseExporter
 
 class DummyExporter(BaseExporter):
     def export(self, data, path, options):

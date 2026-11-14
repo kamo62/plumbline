@@ -7,13 +7,13 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from devops_metrics.config.access import checked_path
+from plumbline.config.access import checked_path
 
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Clean up old export directories by age")
     p.add_argument("--path", default=str(Path("exports").resolve()), help="Exports root path (default: ./exports)")
-    p.add_argument("--retention-days", type=int, default=int(os.getenv("EXPORTS_RETENTION_DAYS", "30")), help="Retention window in days (default: 30)")
+    p.add_argument("--retention-days", type=int, default=int(os.getenv("PLUMBLINE_EXPORTS_RETENTION_DAYS", "30")), help="Retention window in days (default: 30)")
     p.add_argument("--dry-run", action="store_true", help="List what would be deleted without removing")
     p.add_argument("--interval-hours", type=int, default=0, help="If >0, run continuously with this interval in hours")
     return p.parse_args()
@@ -27,43 +27,46 @@ def cleanup_once(root: Path, retention_days: int, dry_run: bool = False) -> int:
         print(f"[cleanup] Path does not exist: {root}")
         return 0
 
+    from sqlalchemy import text
+    from plumbline.config.settings import Settings
+    from plumbline.persistence.models import init_engine_and_tables
+    from uuid import UUID
+    import shutil
+
+    url = Settings().database_url
+    if not url:
+        raise RuntimeError("Retention requires a configured, migrated database")
+    engine = init_engine_and_tables(url)
     removed = 0
     for entry in root.iterdir():
-        try:
-            checked_path(entry)
-            if entry.is_symlink():
-                continue
-            if not entry.is_dir():
-                continue
-            # Check directory modified/created time
-            mtime = datetime.fromtimestamp(entry.stat().st_mtime)
-            if mtime > cutoff:
-                continue
-            # Safety: ensure directory name resembles timestamped export (YYYYMMDD or similar)
-            # but do not solely rely on naming; we use mtime cutoff as decision.
-            if dry_run:
-                print(f"[cleanup] DRY RUN: would remove {entry} (last modified {mtime.isoformat()})")
-            else:
-                print(f"[cleanup] Removing {entry} (last modified {mtime.isoformat()})")
-                for rootdir, dirs, files in os.walk(entry, topdown=False):
-                    for f in files:
-                        try:
-                            os.remove(Path(rootdir) / f)
-                        except Exception as e:  # noqa: BLE001
-                            print(f"[cleanup] Warning: failed to remove file {f}: {e}")
-                    for d in dirs:
-                        try:
-                            Path(rootdir, d).rmdir()
-                        except Exception:
-                            pass
-                try:
-                    entry.rmdir()
-                except Exception as e:
-                    print(f"[cleanup] Warning: failed to remove dir {entry}: {e}")
-                removed += 1
-        except Exception as e:  # noqa: BLE001
-            print(f"[cleanup] Warning: skipping {entry}: {e}")
+        if entry.is_symlink() or not entry.is_dir():
             continue
+        try:
+            run_id = str(UUID(entry.name))
+        except ValueError:
+            continue  # Unknown ownership is protected.
+        if datetime.fromtimestamp(entry.stat().st_mtime) > cutoff:
+            continue
+        with engine.begin() as connection:
+            # Lock the owning row before inspecting state or removing its files.
+            connection.execute(text("UPDATE runs SET artifacts_dir=artifacts_dir WHERE id=:id"), {"id": run_id})
+            row = connection.execute(text("SELECT status, artifacts_dir FROM runs WHERE id=:id"), {"id": run_id}).first()
+            if not row or row[0] not in {"succeeded", "failed", "cancelled"} or not row[1]:
+                continue
+            if Path(row[1]).resolve() != entry.resolve():
+                continue
+            active = connection.execute(text("SELECT COUNT(*) FROM jobs WHERE run_id=:id AND status IN ('queued','running')"), {"id": run_id}).scalar()
+            snapshots = connection.execute(text("SELECT (SELECT COUNT(*) FROM raw_metrics WHERE run_id=:id) + (SELECT COUNT(*) FROM metrics WHERE run_id=:id)"), {"id": run_id}).scalar()
+            if active or snapshots:
+                continue  # Preserve all stored baselines until expiry is modelled explicitly.
+            targets = [entry, *entry.rglob("*")]
+            for target in targets:
+                print(f"[cleanup] {'DRY RUN target' if dry_run else 'Removal target'}: {target}")
+            if not dry_run:
+                shutil.rmtree(entry)
+                connection.execute(text("UPDATE runs SET artifacts_dir=NULL WHERE id=:id"), {"id": run_id})
+                removed += 1
+
     print(f"[cleanup] Done. Removed {removed} directorie(s). Retention={retention_days}d Path={root}")
     return removed
 
