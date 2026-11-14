@@ -1,7 +1,6 @@
 import pytest
-from src.devops_metrics.backend.services.assessors.collaboration_metrics import CollaborationMetricsAssessor
+from plumbline.backend.services.assessors.collaboration_metrics import CollaborationMetricsAssessor
 from unittest.mock import Mock
-from datetime import datetime, timezone
 
 @pytest.fixture
 def scoring_service():
@@ -27,8 +26,8 @@ def test_assess_no_pull_requests(assessor):
 
 def test_assess_all_merged(assessor):
     repo_data = {'pull_requests': [
-        {'status': 'completed', 'reviewers': [{'id': 1}]},
-        {'status': 'completed', 'reviewers': [{'id': 2}]}
+        {'status': 'completed', 'createdBy': {'id': 'author'}, 'reviewers': [{'id': '1', 'vote': 10}]},
+        {'status': 'completed', 'createdBy': {'id': 'author'}, 'reviewers': [{'id': '2', 'vote': 5}]}
     ]}
     result = assessor.assess(repo_data, [], {})
     assert result['metrics']['merge_rate'] == 100.0
@@ -37,8 +36,8 @@ def test_assess_all_merged(assessor):
 
 def test_assess_none_merged(assessor):
     repo_data = {'pull_requests': [
-        {'status': 'active', 'reviewers': [{'id': 1}]},
-        {'status': 'abandoned', 'reviewers': [{'id': 2}]}
+        {'status': 'active', 'createdBy': {'id': 'author'}, 'reviewers': [{'id': '1', 'vote': 10}]},
+        {'status': 'abandoned', 'createdBy': {'id': 'author'}, 'reviewers': [{'id': '2', 'vote': 5}]}
     ]}
     result = assessor.assess(repo_data, [], {})
     assert result['metrics']['merge_rate'] == 0.0
@@ -57,10 +56,10 @@ def test_assess_none_reviewed(assessor):
 
 def test_assess_mixed_cases(assessor):
     repo_data = {'pull_requests': [
-        {'status': 'completed', 'reviewers': [{'id': 1}]},
+        {'status': 'completed', 'createdBy': {'id': 'author'}, 'reviewers': [{'id': '1', 'vote': 10}]},
         {'status': 'active', 'reviewers': []},
         {'status': 'completed', 'reviewers': []},
-        {'status': 'abandoned', 'reviewers': [{'id': 2}]}
+        {'status': 'abandoned', 'createdBy': {'id': 'author'}, 'reviewers': [{'id': '2', 'vote': 5}]}
     ]}
     result = assessor.assess(repo_data, [], {})
     assert 0.0 < result['metrics']['merge_rate'] < 100.0
@@ -84,11 +83,11 @@ def test_calculate_review_coverage_edge_cases(assessor):
     # No PRs
     assert assessor._calculate_review_coverage([]) is None
     # All reviewed
-    prs = [{'reviewers': [{}]} for _ in range(4)]
+    prs = [{'createdBy': {'id': 'author'}, 'reviewers': [{'id': 'reviewer', 'vote': 10}]} for _ in range(4)]
     assert assessor._calculate_review_coverage(prs) == 100.0
     # None reviewed
     prs = [{'reviewers': []} for _ in range(4)]
     assert assessor._calculate_review_coverage(prs) == 0.0
     # Mixed
-    prs = [{'reviewers': [{}]} for _ in range(2)] + [{'reviewers': []} for _ in range(2)]
+    prs = [{'createdBy': {'id': 'author'}, 'reviewers': [{'id': 'reviewer', 'vote': 10}]} for _ in range(2)] + [{'reviewers': []} for _ in range(2)]
     assert assessor._calculate_review_coverage(prs) == 50.0 

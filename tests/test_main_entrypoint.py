@@ -12,7 +12,7 @@ def test_main_entrypoint_displays_help():
     )
 
     result = subprocess.run(
-        [sys.executable, "-m", "devops_metrics", "--help"],
+        [sys.executable, "-m", "plumbline", "--help"],
         capture_output=True,
         text=True,
         env=env,

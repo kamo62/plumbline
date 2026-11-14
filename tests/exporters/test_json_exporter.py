@@ -2,8 +2,8 @@ import json
 from pathlib import Path
 import pytest
 
-from devops_metrics.exporters.json_exporter import JsonExporter
-from devops_metrics.types.export_types import ExportOptions
+from plumbline.exporters.json_exporter import JsonExporter
+from plumbline.types.export_types import ExportOptions
 
 
 def test_json_exporter_success(tmp_path):

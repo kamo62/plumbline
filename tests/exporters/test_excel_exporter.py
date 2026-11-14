@@ -2,8 +2,8 @@ import pandas as pd
 import pytest
 from pathlib import Path
 
-from devops_metrics.exporters.excel_exporter import ExcelExporter
-from devops_metrics.types.export_types import ExportOptions
+from plumbline.exporters.excel_exporter import ExcelExporter
+from plumbline.types.export_types import ExportOptions
 
 
 @pytest.fixture

@@ -14,7 +14,7 @@ version: "3.8"
 
 services:
   db:
-    image: timescale/timescaledb-ha:pg16
+    image: postgres:16
     container_name: metrics-db
     environment:
       - POSTGRES_USER=metrics_user
@@ -23,7 +23,7 @@ services:
     ports:
       - "127.0.0.1:5432:5432"
     volumes:
-      - metrics_pgdata:/var/lib/postgresql/data
+      - plumbline_pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U metrics_user -d metrics_db"]
       interval: 10s
@@ -31,6 +31,7 @@ services:
       retries: 5
 
   app:
+    image: plumbline
     build:
       context: .
       args:
@@ -39,32 +40,15 @@ services:
     container_name: metrics-app
     env_file: .env
     environment:
-      - DATABASE_URL=postgresql+psycopg://metrics_user:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/metrics_db
+      - PLUMBLINE_DATABASE_URL=postgresql+psycopg://metrics_user:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/metrics_db
     volumes:
       - .:/app
     depends_on:
       db:
         condition: service_healthy
 
-  grafana:
-    image: grafana/grafana-oss:10.4.5
-    container_name: metrics-grafana
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:?set GRAFANA_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:?set GRAFANA_PASSWORD}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
-    ports:
-      - "127.0.0.1:3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-      - ./grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
-    depends_on:
-      db:
-        condition: service_healthy
-
   api:
+    image: plumbline
     build:
       context: .
       args:
@@ -73,10 +57,11 @@ services:
     container_name: metrics-api
     env_file: .env
     environment:
-      - RUN_ENV=local
-      - AUTO_RUN_MIGRATIONS=true
-      - DATABASE_URL=postgresql+psycopg://metrics_user:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/metrics_db
-    command: uvicorn src.devops_metrics.api.main:app --host 0.0.0.0 --port 8000 --reload
+      - PLUMBLINE_RUN_ENV=local
+      - PLUMBLINE_AUTO_RUN_MIGRATIONS=true
+      - PLUMBLINE_DISABLE_TIMESCALE_FEATURES=true
+      - PLUMBLINE_DATABASE_URL=postgresql+psycopg://metrics_user:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/metrics_db
+    command: uvicorn plumbline.api.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
@@ -87,11 +72,13 @@ services:
 
   # Optional: one-shot migration helper (run with profile 'tools')
   db-migrate:
+    image: plumbline
     build: .
     container_name: metrics-db-migrate
     environment:
-      - DATABASE_URL=postgresql+psycopg://metrics_user:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/metrics_db
-      - RUN_ENV=local
+      - PLUMBLINE_DATABASE_URL=postgresql+psycopg://metrics_user:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/metrics_db
+      - PLUMBLINE_RUN_ENV=local
+      - PLUMBLINE_DISABLE_TIMESCALE_FEATURES=true
     command: python scripts/migrate.py
     depends_on:
       db:
@@ -100,19 +87,18 @@ services:
       - tools
 
   cleanup:
+    image: plumbline
     build: .
     container_name: metrics-cleanup
     environment:
-      - RUN_ENV=local
-      - EXPORTS_RETENTION_DAYS=${EXPORTS_RETENTION_DAYS:-30}
+      - PLUMBLINE_RUN_ENV=local
+      - PLUMBLINE_EXPORTS_RETENTION_DAYS=${PLUMBLINE_EXPORTS_RETENTION_DAYS:-30}
     volumes:
       - .:/app
-    command: ["python", "scripts/cleanup_exports.py", "--path", "/app/exports", "--retention-days", "${EXPORTS_RETENTION_DAYS:-30}"]
+    command: ["python", "scripts/cleanup_exports.py", "--path", "/app/exports", "--retention-days", "${PLUMBLINE_EXPORTS_RETENTION_DAYS:-30}"]
     profiles:
       - tools
 
 volumes:
-  metrics_pgdata:
-    driver: local
-  grafana_data:
+  plumbline_pgdata:
     driver: local

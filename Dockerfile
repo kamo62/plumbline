@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.12-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
@@ -16,4 +16,4 @@ RUN if [ "$INSTALL_DEV" = "true" ] ; then \
 
 COPY . .
 
-CMD ["uvicorn", "src.devops_metrics.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "plumbline.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

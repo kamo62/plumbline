@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from devops_metrics.backend.services.raw_data_exporter import RawDataExporter
+from plumbline.backend.services.raw_data_exporter import RawDataExporter
 
 
 @pytest.fixture

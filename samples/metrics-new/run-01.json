@@ -1,0 +1,1471 @@
+[
+  {
+    "id": "3cdcd4a7-f490-56da-a29d-1f0b8b285e09",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "actual_review_participation",
+    "metric_value": 38.095238095238095,
+    "metric_json": {
+      "current_reviewed_prs": 0,
+      "current_total_prs": 0,
+      "historical_reviewed_prs": 8,
+      "historical_total_prs": 21
+    },
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "6b26debd-4af2-5287-8878-a421a81eb0e1",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "branch_protection",
+    "metric_value": 100.0,
+    "metric_json": {
+      "has_review": true,
+      "has_blocking_review": true,
+      "has_comment": true,
+      "covers_default_branch": true
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "d7a36a6e-1001-57d7-bef9-a9af52410f2b",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "build_success_rate",
+    "metric_value": 0.0,
+    "metric_json": {
+      "current_success": 0,
+      "current_total": 0,
+      "historical_success": 0,
+      "historical_total": 1
+    },
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "d5149864-c105-5c44-a3d3-322bedf14769",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "build_time",
+    "metric_value": 1.8478059500000001,
+    "metric_json": {
+      "current_sample_size": 0,
+      "historical_sample_size": 1
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "7b9ba2ce-10ed-5fb5-a617-7cb99f657c4f",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "code_coverage",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]",
+        "[removed]",
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "f40a605e-7dda-5c02-9431-fff18fbc3e9a",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "cycle_time",
+    "metric_value": 10.76479324534091,
+    "metric_json": null,
+    "score": 0.8309,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "0627058b-f291-5973-9a9a-1a775060677d",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "deployment_success_rate",
+    "metric_value": 0.0,
+    "metric_json": {
+      "current_success": 0,
+      "current_total": 0,
+      "historical_success": 0,
+      "historical_total": 1
+    },
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "06c7d380-5023-52ec-9338-4da6388e4cec",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "maturity_score",
+    "metric_value": 0.4677,
+    "metric_json": {
+      "maturity_level": 3,
+      "dimensions": {
+        "quality_assurance": {
+          "raw_score": 0.1,
+          "weighted_score": 0.025,
+          "observed_metric_count": 1,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.3333333333333333,
+          "missing_metrics": [
+            "code_coverage",
+            "test_pass_rate"
+          ]
+        },
+        "deployment_pipeline": {
+          "raw_score": 0.475,
+          "weighted_score": 0.11875,
+          "observed_metric_count": 2,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.6666666666666666,
+          "missing_metrics": [
+            "prod_deployment_frequency"
+          ]
+        },
+        "security_compliance": {
+          "raw_score": 0.69,
+          "weighted_score": 0.24149999999999996,
+          "observed_metric_count": 3,
+          "expected_metric_count": 3,
+          "coverage_pct": 1.0,
+          "missing_metrics": []
+        },
+        "collaboration_metrics": {
+          "raw_score": 0.55,
+          "weighted_score": 0.0825,
+          "observed_metric_count": 2,
+          "expected_metric_count": 2,
+          "coverage_pct": 1.0,
+          "missing_metrics": []
+        }
+      },
+      "missing_penalty": 0.0,
+      "exempted_metrics": [],
+      "is_outdated": false,
+      "last_scored_at": "2023-11-05T07:02:14.671858+00:00",
+      "activity_tier": "active",
+      "last_activity_at": "2023-11-04T12:16:54.791778+00:00",
+      "latest_build_activity_at": "2023-11-05T05:03:35.882050+00:00",
+      "latest_pr_activity_at": "2023-11-05T05:03:35.128117+00:00",
+      "latest_commit_activity_at": "2023-11-05T05:03:35.498703+00:00",
+      "scoring_inclusion_reason": "[removed]"
+    },
+    "score": 0.4677,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.671858+00:00"
+  },
+  {
+    "id": "413d0cf3-8b2d-553d-a4bc-c43485df05f8",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "policy_compliance",
+    "metric_value": 82.0,
+    "metric_json": {
+      "enabled_pct": 100.0,
+      "blocking_pct": 40.0,
+      "default_branch_pct": 100.0,
+      "enabled_count": 5,
+      "blocking_count": 2,
+      "default_branch_count": 5,
+      "policy_count": 5
+    },
+    "score": 0.74,
+    "status": "info",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "1749cf6e-f06e-5688-a843-7713fc3801ba",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "prod_deployment_frequency",
+    "metric_value": null,
+    "metric_json": null,
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "cae9d1ca-3d7f-51e5-9d9d-85e2e2c35246",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "review_depth",
+    "metric_value": 0.8260869565217391,
+    "metric_json": null,
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "86111657-17fa-58fa-85d4-34cc8e0df52e",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "review_policy_enforcement",
+    "metric_value": 100.0,
+    "metric_json": {
+      "default_branch_review": true,
+      "default_branch_blocking": true,
+      "default_branch_comment": true
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "293d291e-3346-5d5b-aeaa-6b1efc02e00f",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "security_scanning_coverage",
+    "metric_value": 0.0,
+    "metric_json": {
+      "current_scanned_builds": 0,
+      "current_total_builds": 0,
+      "historical_scanned_builds": 0,
+      "historical_total_builds": 1
+    },
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "60ad7d59-c7cd-5dd8-a4e7-d90d59d8eccd",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-001",
+    "scope": "Repository-001",
+    "metric_key": "test_pass_rate",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.669082+00:00"
+  },
+  {
+    "id": "81438ee3-537e-5cad-9d03-db386cde0699",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "actual_review_participation",
+    "metric_value": 71.42857142857143,
+    "metric_json": {
+      "current_reviewed_prs": 0,
+      "current_total_prs": 0,
+      "historical_reviewed_prs": 5,
+      "historical_total_prs": 7
+    },
+    "score": 0.5524,
+    "status": "warning",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "28723e33-2b4a-54be-ba9d-a28265140876",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "branch_protection",
+    "metric_value": 100.0,
+    "metric_json": {
+      "has_review": true,
+      "has_blocking_review": true,
+      "has_comment": true,
+      "covers_default_branch": true
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "bc8cf58b-8441-5ea6-8c86-07cabed3adde",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "build_success_rate",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "01e2aecf-22d7-5cae-b753-f6c7e424569e",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "build_time",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "d8e8e8fa-4758-5c92-aa16-31de49f8bfcb",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "code_coverage",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "99ce6144-e58d-5dcd-b956-7b1c07ecd97b",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "cycle_time",
+    "metric_value": 214.52687612541663,
+    "metric_json": null,
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "fb8b93c5-d8fc-52a4-9243-8d0ddbb45cac",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "deployment_success_rate",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "fbcbf619-75ee-5dcf-a2d6-a7daa3e89c10",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "maturity_score",
+    "metric_value": 0.4664,
+    "metric_json": {
+      "maturity_level": 3,
+      "dimensions": {
+        "quality_assurance": {
+          "raw_score": 0.0,
+          "weighted_score": 0.0,
+          "observed_metric_count": 0,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.0,
+          "missing_metrics": [
+            "code_coverage",
+            "test_pass_rate",
+            "build_success_rate"
+          ]
+        },
+        "deployment_pipeline": {
+          "raw_score": 0.0,
+          "weighted_score": 0.0,
+          "observed_metric_count": 0,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.0,
+          "missing_metrics": [
+            "prod_deployment_frequency",
+            "build_time",
+            "deployment_success_rate"
+          ]
+        },
+        "security_compliance": {
+          "raw_score": 1.0,
+          "weighted_score": 0.35,
+          "observed_metric_count": 2,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.6666666666666666,
+          "missing_metrics": [
+            "security_scanning_coverage"
+          ]
+        },
+        "collaboration_metrics": {
+          "raw_score": 0.7761904761904762,
+          "weighted_score": 0.11642857142857142,
+          "observed_metric_count": 2,
+          "expected_metric_count": 2,
+          "coverage_pct": 1.0,
+          "missing_metrics": []
+        }
+      },
+      "missing_penalty": 0.0,
+      "exempted_metrics": [],
+      "is_outdated": false,
+      "last_scored_at": "2023-11-05T07:02:14.677025+00:00",
+      "activity_tier": "active",
+      "last_activity_at": "2023-11-04T09:25:25+00:00",
+      "latest_build_activity_at": null,
+      "latest_pr_activity_at": "2023-11-05T05:03:12.353115+00:00",
+      "latest_commit_activity_at": "2023-11-05T05:03:12.752458+00:00",
+      "scoring_inclusion_reason": "[removed]"
+    },
+    "score": 0.4664,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.677025+00:00"
+  },
+  {
+    "id": "164dd714-311f-5a2a-9f9c-89aa1c743fc2",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "policy_compliance",
+    "metric_value": 100.0,
+    "metric_json": {
+      "enabled_pct": 100.0,
+      "blocking_pct": 100.0,
+      "default_branch_pct": 100.0,
+      "enabled_count": 2,
+      "blocking_count": 2,
+      "default_branch_count": 2,
+      "policy_count": 2
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "62400e91-dfd6-5cae-a0a1-0222a3110ea2",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "prod_deployment_frequency",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "8e3360b4-c338-5c4b-9f1a-1ddeaaed0386",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "review_depth",
+    "metric_value": 1.7,
+    "metric_json": null,
+    "score": 0.48,
+    "status": "warning",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "e0abc264-24c3-5b9e-9204-fa6520f5a40e",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "review_policy_enforcement",
+    "metric_value": 100.0,
+    "metric_json": {
+      "default_branch_review": true,
+      "default_branch_blocking": true,
+      "default_branch_comment": true
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "f79e19c5-b6bb-5fda-8518-a9e7bee6f78c",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "security_scanning_coverage",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "06849a1d-ef1f-544d-b3ce-852286470d96",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-002",
+    "scope": "Repository-002",
+    "metric_key": "test_pass_rate",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675598+00:00"
+  },
+  {
+    "id": "c5a12b11-a74f-5120-80ad-63081cbdbfd5",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "actual_review_participation",
+    "metric_value": null,
+    "metric_json": null,
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "e972618e-779c-54a2-a3f6-8ad883159173",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "branch_protection",
+    "metric_value": 100.0,
+    "metric_json": {
+      "has_review": true,
+      "has_blocking_review": true,
+      "has_comment": true,
+      "covers_default_branch": true
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "649c4fb6-6b16-5cd4-8fbf-931159da2dc7",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "build_success_rate",
+    "metric_value": null,
+    "metric_json": null,
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "03279174-3629-5f19-ae46-affd5d0e9308",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "build_time",
+    "metric_value": null,
+    "metric_json": null,
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "28dca574-1c15-5bf5-a00a-fd4421a5c87d",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "code_coverage",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]",
+        "[removed]",
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "36723641-8e64-56a6-a8be-04499c200aac",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "cycle_time",
+    "metric_value": 0.006253396666666667,
+    "metric_json": null,
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "04187d78-32ac-5f32-a362-eaf6bcb64cc6",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "deployment_success_rate",
+    "metric_value": null,
+    "metric_json": null,
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "2b3ae2f8-9356-58c7-a689-cc7e45a0b20e",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "maturity_score",
+    "metric_value": 0.5,
+    "metric_json": {
+      "maturity_level": 3,
+      "dimensions": {
+        "quality_assurance": {
+          "raw_score": 0.0,
+          "weighted_score": 0.0,
+          "observed_metric_count": 0,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.0,
+          "missing_metrics": [
+            "code_coverage",
+            "test_pass_rate",
+            "build_success_rate"
+          ]
+        },
+        "deployment_pipeline": {
+          "raw_score": 0.0,
+          "weighted_score": 0.0,
+          "observed_metric_count": 0,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.0,
+          "missing_metrics": [
+            "prod_deployment_frequency",
+            "build_time",
+            "deployment_success_rate"
+          ]
+        },
+        "security_compliance": {
+          "raw_score": 1.0,
+          "weighted_score": 0.35,
+          "observed_metric_count": 2,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.6666666666666666,
+          "missing_metrics": [
+            "security_scanning_coverage"
+          ]
+        },
+        "collaboration_metrics": {
+          "raw_score": 1.0,
+          "weighted_score": 0.15,
+          "observed_metric_count": 1,
+          "expected_metric_count": 2,
+          "coverage_pct": 0.5,
+          "missing_metrics": [
+            "actual_review_participation"
+          ]
+        }
+      },
+      "missing_penalty": 0.0,
+      "exempted_metrics": [],
+      "is_outdated": false,
+      "last_scored_at": "2023-11-05T07:02:14.675061+00:00",
+      "activity_tier": "active",
+      "last_activity_at": "2023-11-02T08:11:34.952026+00:00",
+      "latest_build_activity_at": "2023-11-05T05:03:35.881983+00:00",
+      "latest_pr_activity_at": "2023-11-05T05:02:54.051803+00:00",
+      "latest_commit_activity_at": "2023-11-05T05:02:54.508131+00:00",
+      "scoring_inclusion_reason": "[removed]"
+    },
+    "score": 0.5,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.675061+00:00"
+  },
+  {
+    "id": "a6b2b223-a54a-5bb9-b669-2e4c78367bb1",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "policy_compliance",
+    "metric_value": 100.0,
+    "metric_json": {
+      "enabled_pct": 100.0,
+      "blocking_pct": 100.0,
+      "default_branch_pct": 100.0,
+      "enabled_count": 2,
+      "blocking_count": 2,
+      "default_branch_count": 2,
+      "policy_count": 2
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "7e23c10b-bf7a-55d8-ab84-1eabc5bb6322",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "prod_deployment_frequency",
+    "metric_value": null,
+    "metric_json": null,
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "12e52ab3-3a8f-56f5-865e-e57bdebf59c9",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "review_depth",
+    "metric_value": 0.3333333333333333,
+    "metric_json": null,
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "4a761c24-cf90-555f-b4a8-cd4c5128950e",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "review_policy_enforcement",
+    "metric_value": 100.0,
+    "metric_json": {
+      "default_branch_review": true,
+      "default_branch_blocking": true,
+      "default_branch_comment": true
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "c04983d6-3fa2-5d7d-88fb-8171aacb646c",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "security_scanning_coverage",
+    "metric_value": null,
+    "metric_json": null,
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "e4c91ea5-7669-509f-885f-b3a1feefe89f",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-001",
+    "repo": "Repository-003",
+    "scope": "Repository-003",
+    "metric_key": "test_pass_rate",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:14.673049+00:00"
+  },
+  {
+    "id": "1ad6efdf-2b72-5050-ac9e-d3b89af1505c",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-004",
+    "scope": "Repository-004",
+    "metric_key": "maturity_score",
+    "metric_value": 0.1164,
+    "metric_json": {
+      "dimensions": {
+        "quality_assurance": {
+          "raw_score": 0.0,
+          "weighted_score": 0.0
+        },
+        "deployment_pipeline": {
+          "raw_score": 0.0,
+          "weighted_score": 0.0
+        },
+        "security_compliance": {
+          "raw_score": 0.7374999999999999,
+          "weighted_score": 0.25812499999999994
+        },
+        "collaboration_metrics": {
+          "raw_score": 0.2,
+          "weighted_score": 0.03
+        }
+      },
+      "is_outdated": true,
+      "decay_factor": 0.404,
+      "activity_tier": "inactive",
+      "last_scored_at": "2023-08-31T14:33:43.468578+00:00",
+      "maturity_level": 1,
+      "missing_penalty": 0.0,
+      "exempted_metrics": [
+        "build_time",
+        "test_pass_rate",
+        "prod_deployment_frequency",
+        "build_success_rate",
+        "security_scanning_coverage",
+        "code_coverage",
+        "deployment_success_rate"
+      ],
+      "last_activity_at": "2023-03-10T11:45:48+00:00",
+      "decayed_from_score": 0.2881,
+      "latest_pr_activity_at": "2023-08-31T13:04:21.414160+00:00",
+      "latest_build_activity_at": null,
+      "scoring_inclusion_reason": "[removed]",
+      "latest_commit_activity_at": "2023-08-31T13:04:21.858933+00:00"
+    },
+    "score": 0.1164,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.986892+00:00"
+  },
+  {
+    "id": "26a02f1e-5083-5d8b-9ac3-4e6757963647",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-005",
+    "scope": "Repository-005",
+    "metric_key": "maturity_score",
+    "metric_value": null,
+    "metric_json": {
+      "maturity_level": null,
+      "dimensions": {},
+      "missing_penalty": 0.0,
+      "exempted_metrics": [],
+      "is_outdated": false,
+      "last_scored_at": null,
+      "activity_tier": "stale",
+      "last_activity_at": null,
+      "latest_build_activity_at": null,
+      "latest_pr_activity_at": null,
+      "latest_commit_activity_at": null,
+      "scoring_inclusion_reason": "[removed]",
+      "stale": true
+    },
+    "score": null,
+    "status": "info",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.987142+00:00"
+  },
+  {
+    "id": "4259873a-9fd1-5921-b9ca-a852bfd729ca",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "actual_review_participation",
+    "metric_value": 6.25,
+    "metric_json": {
+      "current_reviewed_prs": 0,
+      "current_total_prs": 0,
+      "historical_reviewed_prs": 1,
+      "historical_total_prs": 16
+    },
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "f8e7405f-948a-5967-be06-25a22b103cad",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "branch_protection",
+    "metric_value": 40.0,
+    "metric_json": {
+      "has_review": false,
+      "has_blocking_review": false,
+      "has_comment": true,
+      "covers_default_branch": true
+    },
+    "score": 0.3,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "fd43c381-41ae-5042-892e-d7efc7b4a773",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "build_success_rate",
+    "metric_value": 0.0,
+    "metric_json": {
+      "current_success": 0,
+      "current_total": 0,
+      "historical_success": 0,
+      "historical_total": 25
+    },
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "eac0ee41-c23e-575b-bd04-b3a26df6377d",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "build_time",
+    "metric_value": 32.63579354866667,
+    "metric_json": {
+      "current_sample_size": 0,
+      "historical_sample_size": 25
+    },
+    "score": 0.9941,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "9474298f-29b8-5af2-a936-2d92714379bf",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "code_coverage",
+    "metric_value": null,
+    "metric_json": {
+      "missing_fields": [
+        "[removed]",
+        "[removed]",
+        "[removed]"
+      ]
+    },
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "0b883966-e2db-5a98-b306-5ad5acbe2108",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "cycle_time",
+    "metric_value": 30.407361749409727,
+    "metric_json": null,
+    "score": 0.5466,
+    "status": "warning",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "41c50c40-008d-5489-b442-1523a752bc0c",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "deployment_success_rate",
+    "metric_value": 0.0,
+    "metric_json": {
+      "current_success": 0,
+      "current_total": 0,
+      "historical_success": 0,
+      "historical_total": 25
+    },
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "68d00e76-0a46-52cb-8c9f-574b977ab25b",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "maturity_score",
+    "metric_value": 0.3866,
+    "metric_json": {
+      "maturity_level": 2,
+      "dimensions": {
+        "quality_assurance": {
+          "raw_score": 0.1,
+          "weighted_score": 0.025,
+          "observed_metric_count": 2,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.6666666666666666,
+          "missing_metrics": [
+            "code_coverage"
+          ]
+        },
+        "deployment_pipeline": {
+          "raw_score": 0.4725594504179012,
+          "weighted_score": 0.1181398626044753,
+          "observed_metric_count": 2,
+          "expected_metric_count": 3,
+          "coverage_pct": 0.6666666666666666,
+          "missing_metrics": [
+            "prod_deployment_frequency"
+          ]
+        },
+        "security_compliance": {
+          "raw_score": 0.61,
+          "weighted_score": 0.2135,
+          "observed_metric_count": 3,
+          "expected_metric_count": 3,
+          "coverage_pct": 1.0,
+          "missing_metrics": []
+        },
+        "collaboration_metrics": {
+          "raw_score": 0.2,
+          "weighted_score": 0.03,
+          "observed_metric_count": 2,
+          "expected_metric_count": 2,
+          "coverage_pct": 1.0,
+          "missing_metrics": []
+        }
+      },
+      "missing_penalty": 0.0,
+      "exempted_metrics": [],
+      "is_outdated": false,
+      "last_scored_at": "2023-11-05T07:02:15.986758+00:00",
+      "activity_tier": "active",
+      "last_activity_at": "2023-11-04T06:43:38.678466+00:00",
+      "latest_build_activity_at": "2023-11-05T05:58:22.662028+00:00",
+      "latest_pr_activity_at": "2023-11-05T05:58:21.862820+00:00",
+      "latest_commit_activity_at": "2023-11-05T05:58:22.416857+00:00",
+      "scoring_inclusion_reason": "[removed]"
+    },
+    "score": 0.3866,
+    "status": "warning",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.986758+00:00"
+  },
+  {
+    "id": "c50e6278-6327-5477-8133-9c78380f0715",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "policy_compliance",
+    "metric_value": 100.0,
+    "metric_json": {
+      "enabled_pct": 100.0,
+      "blocking_pct": 100.0,
+      "default_branch_pct": 100.0,
+      "enabled_count": 1,
+      "blocking_count": 1,
+      "default_branch_count": 1,
+      "policy_count": 1
+    },
+    "score": 1.0,
+    "status": "pass",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "0153ad1f-1df3-51fc-a9b1-c11681e0dc29",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "prod_deployment_frequency",
+    "metric_value": null,
+    "metric_json": null,
+    "score": 0.0,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "95936912-1004-5dca-8242-808ace18351c",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "review_depth",
+    "metric_value": 0.23529411764705882,
+    "metric_json": null,
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "3dc0d78a-f8e9-5292-bff8-7aed736c465a",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "review_policy_enforcement",
+    "metric_value": 30.0,
+    "metric_json": {
+      "default_branch_review": false,
+      "default_branch_blocking": false,
+      "default_branch_comment": true
+    },
+    "score": 0.3,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "9de93731-3555-529b-8b42-e2f5bea49939",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "security_scanning_coverage",
+    "metric_value": 0.0,
+    "metric_json": {
+      "current_scanned_builds": 0,
+      "current_total_builds": 0,
+      "historical_scanned_builds": 0,
+      "historical_total_builds": 25
+    },
+    "score": 0.1,
+    "status": "fail",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "d6d97ad9-3cfe-5f4e-b073-e3021ae2eac7",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-002",
+    "repo": "Repository-006",
+    "scope": "Repository-006",
+    "metric_key": "test_pass_rate",
+    "metric_value": 15.384615384615385,
+    "metric_json": {
+      "current_passed_tests": 0,
+      "current_total_tests": 0,
+      "historical_passed_tests": 26,
+      "historical_total_tests": 169,
+      "missing_fields": [
+        "[removed]",
+        "[removed]"
+      ]
+    },
+    "score": 0.1,
+    "status": "missing_fields",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:15.983699+00:00"
+  },
+  {
+    "id": "3d8ad18d-95d5-55cb-a8e4-909524fa9975",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-003",
+    "repo": "Repository-007",
+    "scope": "Repository-007",
+    "metric_key": "maturity_score",
+    "metric_value": null,
+    "metric_json": {
+      "maturity_level": null,
+      "dimensions": {},
+      "missing_penalty": 0.0,
+      "exempted_metrics": [],
+      "is_outdated": false,
+      "last_scored_at": "2022-02-24T14:04:01.823718+00:00",
+      "activity_tier": "stale",
+      "last_activity_at": "2022-02-24T14:04:01.823718+00:00",
+      "latest_build_activity_at": null,
+      "latest_pr_activity_at": "2023-11-05T03:44:58.310950+00:00",
+      "latest_commit_activity_at": null,
+      "scoring_inclusion_reason": "[removed]",
+      "stale": true
+    },
+    "score": null,
+    "status": "info",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:17.228060+00:00"
+  },
+  {
+    "id": "a8b0f180-ff75-5bf3-a0e2-5dd0337cd21a",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-003",
+    "repo": "Repository-008",
+    "scope": "Repository-008",
+    "metric_key": "maturity_score",
+    "metric_value": null,
+    "metric_json": {
+      "maturity_level": null,
+      "dimensions": {},
+      "missing_penalty": 0.0,
+      "exempted_metrics": [],
+      "is_outdated": false,
+      "last_scored_at": "2022-06-30T15:03:09.944334+00:00",
+      "activity_tier": "stale",
+      "last_activity_at": "2022-06-30T15:03:09.944334+00:00",
+      "latest_build_activity_at": null,
+      "latest_pr_activity_at": "2023-11-05T03:44:49.467991+00:00",
+      "latest_commit_activity_at": null,
+      "scoring_inclusion_reason": "[removed]",
+      "stale": true
+    },
+    "score": null,
+    "status": "info",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:17.228557+00:00"
+  },
+  {
+    "id": "6b7b3e72-cec7-5761-a1ff-fbf9d247884a",
+    "run_id": "a489767b-53af-51d5-b7f9-bf18d42ae473",
+    "carried_from_run_id": null,
+    "org": "Example-Organisation",
+    "project": "Project-003",
+    "repo": "Repository-009",
+    "scope": "Repository-009",
+    "metric_key": "maturity_score",
+    "metric_value": null,
+    "metric_json": {
+      "maturity_level": null,
+      "dimensions": {},
+      "missing_penalty": 0.0,
+      "exempted_metrics": [],
+      "is_outdated": false,
+      "last_scored_at": null,
+      "activity_tier": "stale",
+      "last_activity_at": null,
+      "latest_build_activity_at": null,
+      "latest_pr_activity_at": null,
+      "latest_commit_activity_at": null,
+      "scoring_inclusion_reason": "[removed]",
+      "stale": true
+    },
+    "score": null,
+    "status": "info",
+    "calculation_version": "legacy-example",
+    "observed_at": "2023-11-05T07:02:17.228930+00:00"
+  }
+]

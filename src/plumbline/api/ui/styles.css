@@ -1,0 +1,7 @@
+:root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+body { margin: 0; line-height: 1.5; } header, main { max-width: 75rem; margin: auto; padding: 1rem; } header { border-bottom: 1px solid #888; } h1, h2 { margin-bottom: .25rem; } section { margin: 1.5rem 0; padding: 1rem; border: 1px solid #888; border-radius: .4rem; overflow-x: auto; } form { display: grid; gap: .5rem; max-width: 40rem; } input, select, button, textarea { font: inherit; padding: .4rem; } input[type=checkbox] { width: auto; } button { cursor: pointer; } .controls { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; } table { border-collapse: collapse; width: 100%; } th, td { padding: .5rem; text-align: left; border-bottom: 1px solid #888; } [hidden] { display: none !important; }
+
+#project-field { display: grid; gap: .5rem; min-width: 0; }
+#project-field textarea, #project-field input { box-sizing: border-box; width: 100%; min-width: 0; }
+#project-field button { justify-self: start; max-width: 100%; }
+#project-message { display: block; }

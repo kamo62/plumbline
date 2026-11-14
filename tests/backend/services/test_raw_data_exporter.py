@@ -3,9 +3,8 @@
 import os
 from datetime import datetime, timedelta
 import pytest
-from unittest.mock import AsyncMock, Mock
-import pandas as pd
-from devops_metrics.backend.services.raw_data_exporter import RawDataExporter
+from unittest.mock import AsyncMock
+from plumbline.backend.services.raw_data_exporter import RawDataExporter
 import json
 
 
@@ -256,3 +255,46 @@ def test_process_repository_data_typical(exporter):
     assert len(result["branches"]) == 1
     assert len(result["pull_requests"]) == 1
     assert len(result["policies"]) == 2
+
+
+def test_consolidated_export_keeps_projects_policies_and_partial_evidence(tmp_path):
+    from openpyxl import load_workbook
+
+    data = {
+        "project": {"name": "Combined"},
+        "repositories": [
+            {"id": "r1", "name": "First", "project": {"id": "p1", "name": "Alpha"}},
+            {"id": "r2", "name": "Second", "project": {"id": "p2", "name": "Beta"}},
+        ],
+        "repository_data": {
+            "r1": {"commits": [{"commitId": "c1"}], "policies": {
+                "repository_policies": [{"id": 11, "type": {"displayName": "Review"},
+                                         "isEnabled": True, "isBlocking": True}],
+                "branch_policies": [None, {"branch_name": "main", "is_default_branch": True,
+                                            "policies": [{"id": 12, "isEnabled": False}, "bad"]}],
+            }},
+            "r2": {"commits": [{"commitId": "c2"}], "policies": "invalid"},
+        },
+        "builds": [], "build_data": {},
+        "completeness": {"Alpha": {"complete": True, "failures": []},
+                         "Beta": {"complete": False, "failures": [
+                             {"scope": "policies", "repository_id": "r2", "error": "denied"}]}},
+    }
+    paths = RawDataExporter(None).export_data(data, str(tmp_path / "raw.xlsx"))
+    assert set(paths) == {"excel", "json"}
+    with open(paths["json"]) as stream:
+        assert json.load(stream) == data
+    workbook = load_workbook(paths["excel"], data_only=True)
+
+    def rows(name):
+        values = list(workbook[name].values)
+        return [dict(zip(values[0], row)) for row in values[1:]]
+
+    assert [(r["repository_name"], r["project_name"]) for r in rows("All Commits")] == [
+        ("First", "Alpha"), ("Second", "Beta")]
+    policies = rows("All Policies")
+    assert [(p["policy_id"], p["is_enabled"], p["is_blocking"], p["scope_type"]) for p in policies] == [
+        (11, True, True, "Repository"), (12, False, None, "Branch")]
+    quality = rows("Data Quality")
+    assert any(r["Project"] == "Beta" and r["Status"] == "Partial" and "denied" in r["Failures"] for r in quality)
+    assert sum(r["Status"] == "Invalid policy data" for r in quality) == 2

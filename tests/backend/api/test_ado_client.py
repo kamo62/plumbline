@@ -10,7 +10,7 @@ import json
 import yarl
 import os
 
-from devops_metrics.backend.api import ado_client
+from plumbline.backend.api import ado_client
 
 
 class FakeSecret:
@@ -179,7 +179,7 @@ class TestAzureDevOpsClient:
         monkeypatch.setattr(azure_client, "_get_aiohttp_session", mock_get_session)
         result = await azure_client.get("https://dev.azure.com/test_org/_apis/test")
         assert result == mock_response_data
-        mock_session.get.assert_called_once_with("https://dev.azure.com/test_org/_apis/test")
+        mock_session.get.assert_called_once_with("https://dev.azure.com/test_org/_apis/test", params=None)
     
     @pytest.mark.asyncio
     @pytest.mark.parametrize("method_name, endpoint, params, expected_url", [
@@ -412,7 +412,7 @@ async def test_get_code_coverage_error(azure_client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_test_results_success(azure_client, monkeypatch):
-    monkeypatch.setattr(azure_client, "get_paginated_results", AsyncMock(return_value=[{"totalTests": 5, "passedTests": 4, "failedTests": 1, "notApplicableTests": 0, "incompleteTests": 0}]))
+    monkeypatch.setattr(azure_client, "get_paginated_results", AsyncMock(return_value=[{"build": {"id": 1}, "totalTests": 5, "passedTests": 4, "failedTests": 1, "notApplicableTests": 0, "incompleteTests": 0}]))
     async def mock_get_session():
         return MagicMock()
     monkeypatch.setattr(azure_client, "_get_aiohttp_session", mock_get_session)

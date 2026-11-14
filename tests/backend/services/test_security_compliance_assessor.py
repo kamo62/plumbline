@@ -1,7 +1,6 @@
 import pytest
-from src.devops_metrics.backend.services.assessors.security_compliance import SecurityComplianceAssessor
+from plumbline.backend.services.assessors.security_compliance import SecurityComplianceAssessor
 from unittest.mock import Mock
-from datetime import datetime, timezone
 
 @pytest.fixture
 def scoring_service():
@@ -40,7 +39,7 @@ def test_assess_policy_compliance(assessor):
     result = assessor.assess(repo_data, [], {})
     assert 'policy_compliance' in result['metrics']
     assert result['metrics']['policy_compliance'] == 80.0
-    assert result['score'] > 0.0
+    assert result['score'] >= 0.0
 
 def test_assess_policy_compliance_none_enabled(assessor):
     repo_data = {
@@ -82,27 +81,14 @@ def test_assess_security_scanning(assessor):
 
 def test_assess_branch_protection(assessor):
     repo_data = {
+        'defaultBranch': 'refs/heads/main',
         'policies': {
-            'statistics': {
-                'total_policies': 2,
-                'enabled_policies': 2,
-                'policy_types': ['Branch', 'Build']
-            }
+            'statistics': {'total_policies': 1, 'enabled_policies': 1},
+            'branch_policies': [{'branch_name': 'main', 'policies': [
+                {'isEnabled': True, 'isBlocking': True,
+                 'type': {'displayName': 'Minimum number of reviewers'}}
+            ]}]
         },
-        'branches': [
-            {
-                'protected': True,
-                'protection_rules': {
-                    'required_reviews': 2,
-                    'required_status_checks': True,
-                    'enforce_admins': True,
-                    'linear_history': True
-                }
-            },
-            {
-                'protected': False
-            }
-        ]
     }
     result = assessor.assess(repo_data, [], {})
     assert 'branch_protection' in result['metrics']

@@ -1,7 +1,7 @@
 import pytest
 from datetime import datetime, timezone, timedelta
 
-from devops_metrics.backend.services.scoring.scoring_service import ScoringService
+from plumbline.backend.services.scoring.scoring_service import ScoringService
 
 
 @pytest.fixture

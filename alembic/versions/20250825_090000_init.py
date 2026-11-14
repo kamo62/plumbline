@@ -12,7 +12,7 @@ depends_on = None
 
 def _timescale_enabled() -> bool:
     """Return True if Timescale features should be applied."""
-    disable = os.getenv("DISABLE_TIMESCALE_FEATURES", "false").lower()
+    disable = os.getenv("PLUMBLINE_DISABLE_TIMESCALE_FEATURES", "false").lower()
     return disable not in {"1", "true", "yes"}
 
 

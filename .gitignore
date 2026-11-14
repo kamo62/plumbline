@@ -35,13 +35,23 @@ logs/
 *.dump
 *.sql.gz
 *.zip
-# Source only: the root README is the sole retained document.
+# Ignore local reports; retain approved project documentation and templates.
 *.[mM][dD]*
 *.[mM][kK][dD]*
 *.[mM][aA][rR][kK][dD][oO][wW][nN]
 *.[rR][sS][tT]
 *.[tT][xX][tT]
 !/README.md
+!/docs/
+!/docs/**
+!/CONTRIBUTING.md
+!/CODE_OF_CONDUCT.md
+!/SECURITY.md
+!/CHANGELOG.md
+!/samples/README.md
+!/.github/ISSUE_TEMPLATE/
+!/.github/ISSUE_TEMPLATE/**
+!/.github/pull_request_template.md
 *.[xX][lL]*
 *.[cC][sS][vV]
 *.[tT][sS][vV]
@@ -75,6 +85,10 @@ GEMINI.md
 .claude/
 .codex/
 .opencode/
+
+# Reference material: never execute or publish
+DO-NOT-RUN/
+DO NOT RUN/
 
 # Editor and operating-system files
 .DS_Store*

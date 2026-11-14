@@ -1,0 +1,48 @@
+{
+  "format": "sanitised-legacy-metrics-example-v1",
+  "source": "metrics-new local aggregate exports",
+  "projects": 3,
+  "repositories": 9,
+  "runs": [
+    {
+      "source_period": "2026-07",
+      "source_sha256": "13fdf4529b28dbf7a5e431c528bcaf69d791ee30992c32e98ef50ab544d12245",
+      "source_records": 23120,
+      "sample_records": 61,
+      "sample_sha256": "9b487de870781de2c7eb0f38e03c7880c69e9bbb7ef32d9406451fbea7e9b399"
+    },
+    {
+      "source_period": "2026-08",
+      "source_sha256": "ba05e0b739a54a15c79139df9e4824e28a0b4b077f2c9e13924550107ca21b21",
+      "source_records": 23527,
+      "sample_records": 61,
+      "sample_sha256": "644add72166c32c8b1a031497488a8b642fe1c56e7f6fb70348098dcd27301de"
+    },
+    {
+      "source_period": "2026-09",
+      "source_sha256": "d3adedb19603f12af064ec4486d942792c4417c80be4a847fb4fe3b81a2a27ec",
+      "source_records": 23982,
+      "sample_records": 74,
+      "sample_sha256": "7fa367042de49970d4c4624f023d5d7addff8125ad0f37ed4ed2af051aa30eee"
+    },
+    {
+      "source_period": "2026-10",
+      "source_sha256": "094ab3a1a875aca2fb18511133663999b98a56d0ac0dbe42c297b0b1c348a5b1",
+      "source_records": 23633,
+      "sample_records": 74,
+      "sample_sha256": "8502a4e93bbcaa0fdb45ca168a346cfdf9120d0b7a22fe5ec4aba94f6f5b98e1"
+    }
+  ],
+  "date_shift_days": -1000,
+  "removed": {
+    "unknown_keys": 0,
+    "free_text": 128
+  },
+  "limitations": [
+    "Aggregate metrics only; no raw builds, commits, PRs or reviewer identities.",
+    "Original numeric measurements and missingness retained; not validated Plumbline scoring.",
+    "No segments, executive summaries, people, URLs, tokens or source identity map included.",
+    "Repository-only subset; source organisation totals do not apply to this subset.",
+    "Not imported into the application database; no collector replay implied."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Plumbline light",
+  "tokens": {
+    "background": "#f3f4f6",
+    "surface": "#ffffff",
+    "text": "#1c2430",
+    "muted": "#535e6d",
+    "border": "#697586",
+    "accent": "#2457a5",
+    "accentText": "#ffffff",
+    "focus": "#174386"
+  }
+}

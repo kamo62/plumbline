@@ -5,10 +5,10 @@ import pytest
 from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, MagicMock, patch
 
-from devops_metrics.backend.services.raw_maturity_assessment import RawMaturityAssessmentService
-from devops_metrics.backend.services.scoring.scoring_service import ScoringService
-from devops_metrics.backend.services.metric_calculators import BuildMetrics, CoverageMetrics
-from devops_metrics.types.assessment_types import (
+from plumbline.backend.services.raw_maturity_assessment import RawMaturityAssessmentService
+from plumbline.backend.services.scoring.scoring_service import ScoringService
+from plumbline.backend.services.metric_calculators import BuildMetrics, CoverageMetrics
+from plumbline.types.assessment_types import (
     QUALITY_ASSURANCE,
     DEPLOYMENT_PIPELINE,
     SECURITY_COMPLIANCE,
