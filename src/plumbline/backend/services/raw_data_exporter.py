@@ -159,7 +159,7 @@ class RawDataExporter(MetricsService):
                             if not isinstance(modules, list):
                                 modules = [modules] if modules else []
 
-                            if modules:
+                            if modules and all(isinstance(m, dict) and isinstance(m.get("statistics"), dict) and {"linesCovered", "linesNotCovered"} <= set(m["statistics"]) for m in modules):
                                 logger.info(
                                     f"Processing {len(modules)} coverage modules for build {build_id}"
                                 )
@@ -201,7 +201,7 @@ class RawDataExporter(MetricsService):
                                                     ),
                                                     "not_covered": m.get(
                                                         "statistics", {}
-                                                    ).get("linesNotCovered", 0),
+                                                    ).get("linesNotCovered"),
                                                 }
                                                 for m in modules
                                                 if isinstance(m, dict)
@@ -225,13 +225,16 @@ class RawDataExporter(MetricsService):
                         # Get the first result safely
                         test_results = results[0] if results else {}
                         if isinstance(test_results, dict):
+                            unavailable = bool(test_data.get("malformed_runs") or test_data.get("unlinked_runs") or build_data.get("failures", {}).get("tests"))
+                            observed_empty = not results and test_data.get("unlinked_runs") == 0 and not unavailable
                             test_record = {
                                 "build_id": build_id,
                                 "repository_id": repo_info.get("id", ""),
                                 "repository_name": repo_info.get("name", ""),
-                                "total_tests": test_results.get("total", 0),
-                                "passed_tests": test_results.get("passed", 0),
-                                "failed_tests": test_results.get("failed", 0),
+                                "total_tests": None if unavailable else test_results.get("total", 0 if observed_empty else None),
+                                "passed_tests": None if unavailable else test_results.get("passed", 0 if observed_empty else None),
+                                "failed_tests": None if unavailable else test_results.get("failed", 0 if observed_empty else None),
+                                "status": "unavailable" if unavailable else "observed_empty" if observed_empty else "observed",
                             }
                             all_tests.append(test_record)
                         else:
@@ -449,7 +452,8 @@ class RawDataExporter(MetricsService):
             complete = detail.get("complete")
             status = "Complete" if complete is True else "Partial" if complete is False else "Unknown"
             rows.append({"Project": project, "Status": status,
-                         "Failures": json.dumps(detail.get("failures", []))})
+                         "Failures": json.dumps(detail.get("failures", [])),
+                         "Caveats": json.dumps(detail.get("caveats", []))})
         if not rows:
             rows.append({"Project": "", "Status": "Unknown", "Failures": "Completeness not provided"})
         for repo_id, repo_data in raw_data.get("repository_data", {}).items():
@@ -488,6 +492,7 @@ class RawDataExporter(MetricsService):
             "is_enabled": policy.get("isEnabled", policy.get("is_enabled")),
             "is_blocking": policy.get("isBlocking", policy.get("is_blocking")),
             "scope_type": scope_type,
+            "applicable_scopes": json.dumps(policy.get("applicable_scopes", [])),
             "branch_name": branch_name,
             "is_default_branch": is_default,
             "created_by": json.dumps(policy.get("createdBy", policy.get("created_by", {}))),

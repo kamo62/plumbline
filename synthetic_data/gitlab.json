@@ -1,0 +1,96 @@
+{
+  "dataset": "synthetic_gitlab",
+  "provider": "gitlab",
+  "api_version": "v4",
+  "documentation_date": "2026-11-17",
+  "provenance": "synthetic_from_public_documentation_not_live_capture",
+  "profile": "synthetic_selected_documented_fields_not_full_schema",
+  "window": {"start": "2026-01-01T00:00:00Z", "end_exclusive": "2026-02-01T00:00:00Z", "observed_at": "2026-02-02T00:00:00Z"},
+  "sources": {
+    "projects": "https://docs.gitlab.com/api/groups/#list-projects",
+    "merge_requests": "https://docs.gitlab.com/api/merge_requests/",
+    "approvals": "https://docs.gitlab.com/api/merge_request_approvals/",
+    "pipelines": "https://docs.gitlab.com/api/pipelines/",
+    "jobs": "https://docs.gitlab.com/api/jobs/",
+    "protected_branches": "https://docs.gitlab.com/api/protected_branches/"
+  },
+  "responses": [
+    {
+      "name": "synthetic_projects_page_1", "source": "projects", "method": "GET",
+      "url": "https://gitlab.com/api/v4/groups/synthetic_group/projects?per_page=1&page=1",
+      "status": 200, "headers": {"X-Page": "1", "X-Per-Page": "1", "X-Next-Page": "2", "Link": "<https://gitlab.com/api/v4/groups/synthetic_group/projects?per_page=1&page=2>; rel=\"next\""},
+      "body": [{"id": 900101, "name": "synthetic_atlas", "path": "synthetic_atlas", "path_with_namespace": "synthetic_group/synthetic_atlas", "description": "synthetic_private_project", "default_branch": "synthetic_main", "visibility": "private", "archived": false, "empty_repo": false, "namespace": {"id": 900001, "name": "synthetic_group", "path": "synthetic_group", "kind": "group", "full_path": "synthetic_group"}, "web_url": "https://gitlab.com/synthetic_group/synthetic_atlas"}]
+    },
+    {
+      "name": "synthetic_projects_page_2", "source": "projects", "method": "GET",
+      "url": "https://gitlab.com/api/v4/groups/synthetic_group/projects?per_page=1&page=2",
+      "status": 200, "headers": {"X-Page": "2", "X-Per-Page": "1", "X-Next-Page": ""},
+      "body": [{"id": 900102, "name": "synthetic_birch", "path": "synthetic_birch", "path_with_namespace": "synthetic_group/synthetic_birch", "description": "synthetic_second_project", "default_branch": "synthetic_main", "visibility": "private", "archived": false, "empty_repo": false, "namespace": {"id": 900001, "name": "synthetic_group", "path": "synthetic_group", "kind": "group", "full_path": "synthetic_group"}, "web_url": "https://gitlab.com/synthetic_group/synthetic_birch"}]
+    },
+    {
+      "name": "synthetic_merged_merge_request", "source": "merge_requests", "method": "GET",
+      "url": "https://gitlab.com/api/v4/projects/900101/merge_requests/11",
+      "status": 200, "headers": {},
+      "body": {"id": 900011, "iid": 11, "project_id": 900101, "source_project_id": 900101, "target_project_id": 900101, "title": "synthetic_api_change", "description": "synthetic_change_opened_before_window", "state": "merged", "draft": false, "created_at": "2025-12-01T09:00:00Z", "merged_at": "2026-01-10T10:00:00Z", "closed_at": null, "updated_at": "2026-02-01T12:00:00Z", "source_branch": "synthetic_feature", "target_branch": "synthetic_main", "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "merge_commit_sha": "cccccccccccccccccccccccccccccccccccccccc", "author": {"id": 900201, "username": "synthetic_author", "name": "synthetic_author", "state": "active", "web_url": "https://gitlab.com/synthetic_author"}, "web_url": "https://gitlab.com/synthetic_group/synthetic_atlas/-/merge_requests/11"}
+    },
+    {
+      "name": "synthetic_current_approvals", "source": "approvals", "method": "GET",
+      "url": "https://gitlab.com/api/v4/projects/900101/merge_requests/11/approvals",
+      "status": 200, "headers": {},
+      "body": {"id": 900011, "iid": 11, "project_id": 900101, "title": "synthetic_api_change", "state": "merged", "approved": true, "approvals_required": 1, "approvals_left": 0, "approved_by": [{"user": {"id": 900202, "username": "synthetic_reviewer", "name": "synthetic_reviewer", "state": "active", "web_url": "https://gitlab.com/synthetic_reviewer"}, "approved_at": "2026-01-09T09:00:00Z"}], "user_has_approved": false, "user_can_approve": false, "has_approval_rules": true}
+    },
+    {
+      "name": "synthetic_approval_rules", "source": "approvals", "method": "GET",
+      "url": "https://gitlab.com/api/v4/projects/900101/merge_requests/11/approval_state",
+      "status": 200, "headers": {},
+      "body": {"approval_rules_overwritten": false, "rules": [{"id": 900601, "name": "synthetic_required_review", "rule_type": "regular", "approvals_required": 1, "approved": true, "approved_by": [{"id": 900202, "username": "synthetic_reviewer", "name": "synthetic_reviewer", "state": "active"}], "eligible_approvers": [{"id": 900202, "username": "synthetic_reviewer", "name": "synthetic_reviewer", "state": "active"}], "users": [{"id": 900202, "username": "synthetic_reviewer", "name": "synthetic_reviewer", "state": "active"}], "groups": [], "contains_hidden_groups": false, "source_rule": null, "overridden": false}]}
+    },
+    {
+      "name": "synthetic_pipelines", "source": "pipelines", "method": "GET",
+      "url": "https://gitlab.com/api/v4/projects/900101/pipelines?per_page=100&page=1",
+      "status": 200, "headers": {"X-Next-Page": ""},
+      "body": [
+        {"id": 900008, "iid": 8, "project_id": 900101, "name": "synthetic_ci_running", "status": "running", "source": "push", "ref": "synthetic_main", "sha": "dddddddddddddddddddddddddddddddddddddddd", "created_at": "2026-01-31T23:59:00Z", "updated_at": "2026-02-01T23:59:00Z", "web_url": "https://gitlab.com/synthetic_group/synthetic_atlas/-/pipelines/900008"},
+        {"id": 900007, "iid": 7, "project_id": 900101, "name": "synthetic_ci_completed", "status": "success", "source": "push", "ref": "synthetic_main", "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "created_at": "2025-12-31T23:59:00Z", "updated_at": "2026-01-01T00:05:00Z", "web_url": "https://gitlab.com/synthetic_group/synthetic_atlas/-/pipelines/900007"}
+      ]
+    },
+    {
+      "name": "synthetic_pipeline_detail", "source": "pipelines", "method": "GET",
+      "url": "https://gitlab.com/api/v4/projects/900101/pipelines/900007",
+      "status": 200, "headers": {},
+      "body": {"id": 900007, "iid": 7, "project_id": 900101, "name": "synthetic_ci_completed", "status": "success", "source": "push", "ref": "synthetic_main", "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "created_at": "2025-12-31T23:59:00Z", "started_at": "2026-01-01T00:00:00Z", "finished_at": "2026-01-01T00:05:00Z", "updated_at": "2026-01-01T00:05:00Z", "duration": 300, "queued_duration": 60, "coverage": null, "web_url": "https://gitlab.com/synthetic_group/synthetic_atlas/-/pipelines/900007"}
+    },
+    {
+      "name": "synthetic_test_report_summary", "source": "pipelines", "method": "GET",
+      "url": "https://gitlab.com/api/v4/projects/900101/pipelines/900007/test_report_summary",
+      "status": 200, "headers": {},
+      "body": {"total": {"time": 12, "count": 20, "success": 18, "failed": 2, "skipped": 0, "error": 0, "suite_error": null}, "test_suites": [{"name": "synthetic_unit_tests", "total_time": 12, "total_count": 20, "success_count": 18, "failed_count": 2, "skipped_count": 0, "error_count": 0, "build_ids": [900071], "suite_error": null}]}
+    },
+    {
+      "name": "synthetic_jobs_including_retries", "source": "jobs", "method": "GET",
+      "url": "https://gitlab.com/api/v4/projects/900101/pipelines/900007/jobs?include_retried=true&per_page=100&page=1",
+      "status": 200, "headers": {"X-Next-Page": ""},
+      "body": [
+        {"id": 900071, "name": "synthetic_unit_tests", "stage": "synthetic_test_stage", "status": "success", "allow_failure": false, "ref": "synthetic_main", "created_at": "2026-01-01T00:01:00Z", "started_at": "2026-01-01T00:02:00Z", "finished_at": "2026-01-01T00:05:00Z", "pipeline": {"id": 900007, "iid": 7, "project_id": 900101, "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "ref": "synthetic_main", "status": "success"}},
+        {"id": 900070, "name": "synthetic_unit_tests", "stage": "synthetic_test_stage", "status": "failed", "allow_failure": false, "ref": "synthetic_main", "created_at": "2025-12-31T23:59:00Z", "started_at": "2026-01-01T00:00:00Z", "finished_at": "2026-01-01T00:01:00Z", "pipeline": {"id": 900007, "iid": 7, "project_id": 900101, "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "ref": "synthetic_main", "status": "success"}}
+      ]
+    },
+    {
+      "name": "synthetic_protected_branches", "source": "protected_branches", "method": "GET",
+      "url": "https://gitlab.com/api/v4/projects/900101/protected_branches?per_page=100&page=1",
+      "status": 200, "headers": {"X-Next-Page": ""},
+      "body": [{"id": 900611, "name": "synthetic_main", "push_access_levels": [{"access_level": 0}], "merge_access_levels": [{"access_level": 40}], "allow_force_push": false, "code_owner_approval_required": false}]
+    }
+  ],
+  "edge_cases": [
+    {"name": "synthetic_empty_project", "response_to": "synthetic_projects_page_2", "classification": "synthetic_documented_shape", "status": 200, "headers": {"X-Next-Page": ""}, "body": [{"id": 900102, "name": "synthetic_empty", "path": "synthetic_empty", "path_with_namespace": "synthetic_group/synthetic_empty", "description": "synthetic_empty_project", "default_branch": null, "visibility": "private", "archived": false, "empty_repo": true, "namespace": {"id": 900001, "name": "synthetic_group", "path": "synthetic_group", "kind": "group", "full_path": "synthetic_group"}, "web_url": "https://gitlab.com/synthetic_group/synthetic_empty"}], "expected_interpretation": "synthetic_empty_repository_not_failed_branch_control"},
+    {"name": "synthetic_zero_tests", "response_to": "synthetic_test_report_summary", "classification": "synthetic_documented_shape", "status": 200, "headers": {}, "body": {"total": {"time": 0, "count": 0, "success": 0, "failed": 0, "skipped": 0, "error": 0, "suite_error": null}, "test_suites": []}, "expected_interpretation": "synthetic_zero_population_not_zero_percent"},
+    {"name": "synthetic_missing_success_count", "response_to": "synthetic_test_report_summary", "classification": "synthetic_deliberately_malformed", "status": 200, "headers": {}, "body": {"total": {"count": 20, "failed": 2}, "test_suites": []}, "expected_interpretation": "synthetic_unknown_pass_count_not_zero"},
+    {"name": "synthetic_no_approval_rules", "response_to": "synthetic_current_approvals", "classification": "synthetic_documented_enterprise_edition_shape", "status": 200, "headers": {}, "body": {"id": 900011, "iid": 11, "project_id": 900101, "title": "synthetic_api_change", "state": "merged", "approved": true, "approved_by": [], "approvals_required": 0, "approvals_left": 0, "has_approval_rules": false, "user_has_approved": false, "user_can_approve": false}, "expected_interpretation": "synthetic_satisfied_zero_rules_is_not_an_actual_review"},
+    {"name": "synthetic_same_iid_other_project", "source": "merge_requests", "method": "GET", "url": "https://gitlab.com/api/v4/projects/900102/merge_requests/11", "classification": "synthetic_documented_shape", "status": 200, "headers": {}, "body": {"id": 900012, "iid": 11, "project_id": 900102, "title": "synthetic_other_project_change", "description": "synthetic_iid_is_project_scoped", "state": "opened", "source_branch": "synthetic_other_feature", "target_branch": "synthetic_main", "sha": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "created_at": "2026-01-20T09:00:00Z", "updated_at": "2026-01-20T09:00:00Z", "merged_at": null, "closed_at": null}, "expected_interpretation": "synthetic_do_not_merge_identity_by_iid_alone"},
+    {"name": "synthetic_approval_state_denied", "response_to": "synthetic_approval_rules", "classification": "synthetic_http_failure", "status": 403, "headers": {}, "body": {"message": "synthetic_permission_denied"}, "expected_interpretation": "synthetic_unknown_rule_satisfaction"},
+    {"name": "synthetic_rate_limited", "response_to": "synthetic_pipelines", "classification": "synthetic_http_failure", "status": 429, "headers": {"Retry-After": "0"}, "body": {"message": "synthetic_rate_limited"}, "expected_interpretation": "synthetic_retry_policy_test_no_live_wait_required"}
+  ],
+  "expected_facts": {"project_ids_across_pages": [900101, 900102], "passed_tests": 18, "reported_tests": 20, "reported_pass_percent": 90, "line_coverage_percent": null, "historical_revision_valid_review_coverage": null, "completed_pipeline_ids_with_detail_in_window": [900007]},
+  "limitations": ["synthetic_gitlab_com_enterprise_edition_approval_fields", "synthetic_current_approval_state_is_not_complete_historical_revision_evidence", "synthetic_junit_counts_do_not_determine_ci_exit_status", "synthetic_job_attempts_are_not_distinct_logical_test_populations", "synthetic_selected_fields_not_complete_schema"]
+}

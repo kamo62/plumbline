@@ -1,0 +1,87 @@
+{
+  "dataset": "synthetic_github",
+  "provider": "github",
+  "api_version": "2026-03-10",
+  "documentation_date": "2026-11-17",
+  "provenance": "synthetic_from_public_documentation_not_live_capture",
+  "profile": "synthetic_selected_documented_fields_not_full_schema",
+  "request_headers": {"Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2026-03-10"},
+  "window": {"start": "2026-01-01T00:00:00Z", "end_exclusive": "2026-02-01T00:00:00Z", "observed_at": "2026-02-02T00:00:00Z"},
+  "sources": {
+    "repositories": "https://docs.github.com/en/rest/repos/repos#list-repositories-for-the-authenticated-user",
+    "pull_requests": "https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request",
+    "reviews": "https://docs.github.com/en/rest/pulls/reviews#list-reviews-for-a-pull-request",
+    "workflow_runs": "https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository",
+    "check_runs": "https://docs.github.com/en/rest/checks/runs#list-check-runs-for-a-git-reference",
+    "artifacts": "https://docs.github.com/en/rest/actions/artifacts",
+    "rules": "https://docs.github.com/en/rest/repos/rules#get-rules-for-a-branch",
+    "protection": "https://docs.github.com/en/rest/branches/branch-protection#get-branch-protection"
+  },
+  "responses": [
+    {
+      "name": "synthetic_repositories_page_1", "source": "repositories", "method": "GET",
+      "url": "https://api.github.com/user/repos?per_page=1&page=1",
+      "status": 200, "headers": {"Link": "<https://api.github.com/user/repos?per_page=1&page=2>; rel=\"next\", <https://api.github.com/user/repos?per_page=1&page=2>; rel=\"last\""},
+      "body": [{"id": 900101, "name": "synthetic_atlas", "full_name": "synthetic-org/synthetic_atlas", "description": "synthetic_private_repository", "private": true, "fork": false, "archived": false, "disabled": false, "default_branch": "synthetic_main", "owner": {"id": 900001, "login": "synthetic-org", "type": "Organization"}, "html_url": "https://github.com/synthetic-org/synthetic_atlas", "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas"}]
+    },
+    {
+      "name": "synthetic_repositories_page_2", "source": "repositories", "method": "GET",
+      "url": "https://api.github.com/user/repos?per_page=1&page=2",
+      "status": 200, "headers": {},
+      "body": [{"id": 900102, "name": "synthetic_archived", "full_name": "synthetic-org/synthetic_archived", "description": "synthetic_archived_repository", "private": true, "fork": false, "archived": true, "disabled": false, "default_branch": "synthetic_main", "owner": {"id": 900001, "login": "synthetic-org", "type": "Organization"}, "html_url": "https://github.com/synthetic-org/synthetic_archived", "url": "https://api.github.com/repos/synthetic-org/synthetic_archived"}]
+    },
+    {
+      "name": "synthetic_merged_pull_request", "source": "pull_requests", "method": "GET",
+      "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/pulls/11",
+      "status": 200, "headers": {},
+      "body": {"id": 900011, "number": 11, "title": "synthetic_api_change", "body": "synthetic_change_opened_before_window", "state": "closed", "merged": true, "draft": false, "created_at": "2025-12-01T09:00:00Z", "closed_at": "2026-01-10T10:00:00Z", "merged_at": "2026-01-10T10:00:00Z", "updated_at": "2026-02-01T12:00:00Z", "user": {"id": 900201, "login": "synthetic-author", "type": "User"}, "head": {"ref": "synthetic_feature", "sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "repo": {"id": 900101, "name": "synthetic_atlas", "full_name": "synthetic-org/synthetic_atlas"}}, "base": {"ref": "synthetic_main", "sha": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "repo": {"id": 900101, "name": "synthetic_atlas", "full_name": "synthetic-org/synthetic_atlas"}}, "merge_commit_sha": "cccccccccccccccccccccccccccccccccccccccc", "additions": 12, "deletions": 3, "changed_files": 2}
+    },
+    {
+      "name": "synthetic_review_history", "source": "reviews", "method": "GET",
+      "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/pulls/11/reviews?per_page=100&page=1",
+      "status": 200, "headers": {},
+      "body": [
+        {"id": 900301, "user": {"id": 900202, "login": "synthetic-reviewer", "type": "User"}, "body": "synthetic_approval_of_earlier_revision", "state": "APPROVED", "submitted_at": "2026-01-08T09:00:00Z", "commit_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "author_association": "MEMBER"},
+        {"id": 900302, "user": {"id": 900202, "login": "synthetic-reviewer", "type": "User"}, "body": "synthetic_changes_requested_on_current_revision", "state": "CHANGES_REQUESTED", "submitted_at": "2026-01-09T09:00:00Z", "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "author_association": "MEMBER"},
+        {"id": 900303, "user": {"id": 900201, "login": "synthetic-author", "type": "User"}, "body": "synthetic_author_comment", "state": "COMMENTED", "submitted_at": "2026-01-09T10:00:00Z", "commit_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "author_association": "MEMBER"}
+      ]
+    },
+    {
+      "name": "synthetic_workflow_runs", "source": "workflow_runs", "method": "GET",
+      "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/actions/runs?per_page=100&page=1",
+      "status": 200, "headers": {},
+      "body": {"total_count": 2, "workflow_runs": [
+        {"id": 900007, "name": "synthetic_ci", "display_title": "synthetic_ci_old_creation", "workflow_id": 900501, "check_suite_id": 900700, "head_branch": "synthetic_main", "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "path": ".github/workflows/synthetic_ci.yml", "run_number": 7, "run_attempt": 2, "event": "push", "status": "completed", "conclusion": "success", "created_at": "2025-12-31T23:59:00Z", "run_started_at": "2026-01-01T00:00:00Z", "updated_at": "2026-02-01T12:00:00Z", "pull_requests": [], "html_url": "https://github.com/synthetic-org/synthetic_atlas/actions/runs/900007"},
+        {"id": 900008, "name": "synthetic_ci", "display_title": "synthetic_ci_running", "workflow_id": 900501, "check_suite_id": 900800, "head_branch": "synthetic_main", "head_sha": "dddddddddddddddddddddddddddddddddddddddd", "path": ".github/workflows/synthetic_ci.yml", "run_number": 8, "run_attempt": 1, "event": "push", "status": "in_progress", "conclusion": null, "created_at": "2026-01-31T23:59:00Z", "run_started_at": "2026-02-01T23:59:00Z", "updated_at": "2026-02-01T23:59:00Z", "pull_requests": [], "html_url": "https://github.com/synthetic-org/synthetic_atlas/actions/runs/900008"}
+      ]}
+    },
+    {
+      "name": "synthetic_check_runs", "source": "check_runs", "method": "GET",
+      "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/commits/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/check-runs?per_page=100&page=1",
+      "status": 200, "headers": {},
+      "body": {"total_count": 1, "check_runs": [{"id": 900071, "name": "synthetic_ci", "head_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "status": "completed", "conclusion": "success", "started_at": "2026-01-01T00:00:00Z", "completed_at": "2026-01-01T00:05:00Z", "check_suite": {"id": 900700}, "output": {"title": "synthetic_ci_output", "summary": "synthetic_no_standard_test_counters", "annotations_count": 0}}]}
+    },
+    {
+      "name": "synthetic_artifacts", "source": "artifacts", "method": "GET",
+      "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/actions/runs/900007/artifacts?per_page=100&page=1",
+      "status": 200, "headers": {},
+      "body": {"total_count": 1, "artifacts": [{"id": 900801, "name": "synthetic_junit_report", "size_in_bytes": 2048, "expired": true, "created_at": "2026-01-01T00:05:00Z", "updated_at": "2026-01-01T00:05:00Z", "expires_at": "2026-01-08T00:05:00Z", "archive_download_url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/actions/artifacts/900801/zip"}]}
+    },
+    {
+      "name": "synthetic_branch_rules", "source": "rules", "method": "GET",
+      "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/rules/branches/synthetic_main",
+      "status": 200, "headers": {},
+      "body": [{"type": "pull_request", "ruleset_id": 900601, "ruleset_source_type": "Repository", "ruleset_source": "synthetic-org/synthetic_atlas", "parameters": {"required_approving_review_count": 1, "dismiss_stale_reviews_on_push": true, "require_code_owner_review": false, "require_last_push_approval": true, "required_review_thread_resolution": true}}]
+    }
+  ],
+  "edge_cases": [
+    {"name": "synthetic_empty_inventory", "response_to": "synthetic_repositories_page_1", "classification": "synthetic_documented_shape", "status": 200, "headers": {}, "body": [], "expected_interpretation": "synthetic_known_empty_accessible_inventory_not_proof_of_global_inventory"},
+    {"name": "synthetic_hidden_or_missing_repository", "source": "repositories", "method": "GET", "url": "https://api.github.com/repos/synthetic-org/synthetic_hidden", "classification": "synthetic_http_failure", "status": 404, "headers": {}, "body": {"message": "synthetic_not_found"}, "expected_interpretation": "synthetic_cannot_distinguish_hidden_from_absent"},
+    {"name": "synthetic_protection_denied", "source": "protection", "method": "GET", "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/branches/synthetic_main/protection", "classification": "synthetic_http_failure", "status": 403, "headers": {}, "body": {"message": "synthetic_permission_denied"}, "expected_interpretation": "synthetic_unknown_controls_not_unprotected"},
+    {"name": "synthetic_expired_artifact", "source": "artifacts", "method": "GET", "url": "https://api.github.com/repos/synthetic-org/synthetic_atlas/actions/artifacts/900801/zip", "classification": "synthetic_http_failure", "status": 410, "headers": {}, "body": {"message": "synthetic_artifact_expired"}, "expected_interpretation": "synthetic_report_unavailable_not_zero_tests"},
+    {"name": "synthetic_rate_limited", "response_to": "synthetic_workflow_runs", "classification": "synthetic_http_failure", "status": 429, "headers": {"Retry-After": "0", "X-RateLimit-Remaining": "0"}, "body": {"message": "synthetic_rate_limited"}, "expected_interpretation": "synthetic_retry_policy_test_no_live_wait_required"},
+    {"name": "synthetic_missing_repository_id", "response_to": "synthetic_repositories_page_1", "classification": "synthetic_deliberately_malformed", "status": 200, "headers": {}, "body": [{"name": "synthetic_broken_repository", "full_name": "synthetic-org/synthetic_broken_repository"}], "expected_interpretation": "synthetic_incomplete_inventory_not_silent_drop"}
+  ],
+  "expected_facts": {"repository_ids_across_pages": [900101, 900102], "passed_tests": null, "reported_tests": null, "reported_pass_percent": null, "historical_revision_valid_review_coverage": null, "check_runs_completed_in_window": [900071], "workflow_completion_from_updated_at": null},
+  "limitations": ["synthetic_workflow_success_is_not_a_test_count", "synthetic_updated_at_is_not_workflow_completion", "synthetic_old_commit_approval_is_not_current_revision_approval", "synthetic_artifact_metadata_is_not_report_content", "synthetic_selected_fields_not_complete_schema"]
+}

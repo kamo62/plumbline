@@ -27,9 +27,9 @@ class Source:
         self.fail = False
 
     async def get_project(self, _): return {"id": "p", "name": "Project"}
-    async def get_repositories(self, _): return [{"id": "r"}]
+    async def get_repositories(self, _): return [{"id": "r", "name": "repo"}]
     async def get_builds(self, *_):
-        return [{"id": 7, "queueTime": "2026-01-01T00:00:00Z", "repository": {"id": "r"}}]
+        return [{"id": 7, "queueTime": "2026-01-01T00:00:00Z", "finishTime": "2026-01-01T00:00:00Z", "status": "completed", "result": "succeeded", "repository": {"id": "r"}}]
     async def get_commits(self, *_): return [{"id": "boundary", "date": "2026-01-01T00:00:00Z"}]
     async def get_branches(self, *_): return []
     async def get_branch_policies(self, *_): return []
@@ -41,7 +41,7 @@ class Source:
     async def get_test_results(self, *_):
         if self.fail:
             raise RuntimeError("temporary")
-        return {"results": [{"total": 5, "passed": 4}]} if self.late else {"results": []}
+        return {"results": [{"total": 5, "passed": 4}]} if self.late else {"results": [], "unlinked_runs": 0}
     async def get_code_coverage(self, *_): return {"line": 75} if self.late else {}
     async def get_security_scan_results(self, *_): return []
 

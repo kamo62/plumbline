@@ -3,13 +3,11 @@ import os
 from dataclasses import asdict
 
 from cryptography.fernet import Fernet, InvalidToken
-from pydantic import SecretStr
 from sqlalchemy import text
 from sqlmodel import select
 
 from plumbline.auth.service import event
-from plumbline.providers import ADOProvider, SyntheticProvider, doctor
-from plumbline.providers.synthetic import WINDOW
+from plumbline.providers.registry import get_provider
 from .models import Connection
 
 
@@ -69,23 +67,15 @@ def rotate(db, old_key, new_key):
 
 
 async def run_doctor(item):
-    if item.provider == "synthetic":
-        result = await doctor(SyntheticProvider(item.id), item.config.get("projects") or ["Alpha", "Beta"], WINDOW)
-    else:
+    spec = get_provider(item.provider)
+    organisation, projects = spec.connection_inputs(item.organisation, item.config, item.credential_ciphertext is not None)
+    credential = None
+    if spec.credential_required_for_execution:
         if not item.credential_ciphertext:
             raise CredentialError("Credential is missing")
-        from plumbline.backend.api.ado_client import AzureDevOpsClient
-        from plumbline.config.settings import Settings
-        from plumbline.providers.contract import Window
-        from datetime import datetime, timedelta, timezone
-
         credential = decrypt(item.credential_ciphertext)
-        try:
-            settings = Settings(azure_devops_org=item.organisation, azure_devops_pat=SecretStr(credential))
-            end = datetime.now(timezone.utc)
-            async with AzureDevOpsClient(settings) as client:
-                result = await doctor(ADOProvider(client, item.id), item.config["projects"],
-                                      Window(end - timedelta(days=30), end, end))
-        finally:
-            del credential
+    try:
+        result = await spec.diagnostic(item.id, organisation, projects, credential)
+    finally:
+        del credential
     return asdict(result)

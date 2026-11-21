@@ -8,6 +8,7 @@ collection entry point therefore always fetches the full requested window.
 from datetime import datetime, timezone
 from hashlib import sha256
 import json
+from uuid import UUID
 
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -32,6 +33,11 @@ checkpoints = sa.Table(
     *(sa.Column(name, sa.String(256), primary_key=True) for name in
       ("connection_id", "project_id", "repository_id", "entity_type", "entity_id", "field")),
     sa.Column("window_end", sa.String(32), nullable=False),
+    sa.Column("snapshot_id", sa.String(64), nullable=False),
+)
+run_evidence = sa.Table(
+    "run_evidence", metadata,
+    sa.Column("run_id", sa.String(36), primary_key=True),
     sa.Column("snapshot_id", sa.String(64), nullable=False),
 )
 
@@ -72,7 +78,9 @@ def _payload(snapshot):
     data = {"format_version": FORMAT_VERSION, "connection": snapshot.connection,
             "window": {"start": _time(snapshot.window.start), "end": _time(snapshot.window.end),
                        "as_of": _time(snapshot.window.as_of)},
-            "capabilities": sorted(snapshot.capabilities)}
+            "capabilities": sorted(snapshot.capabilities),
+            "collection_started_at": _time(snapshot.collection_started_at) if snapshot.collection_started_at else None,
+            "collection_completed_at": _time(snapshot.collection_completed_at) if snapshot.collection_completed_at else None}
     for kind in ("projects", "repositories", "builds"):
         data[kind] = [_record(record, snapshot.connection, kind) for record in getattr(snapshot, kind)]
         keys = [(r["identity"]["project"], r["identity"]["repository"], r["identity"]["build"]) for r in data[kind]]
@@ -89,6 +97,40 @@ def _insert(conn, table):
     raise ValueError("Only SQLite and PostgreSQL are supported")
 
 
+def _digest(data):
+    encoded = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
+    return sha256(encoded.encode()).hexdigest()
+
+
+def _verified_payload(conn, snapshot_id):
+    try:
+        data = conn.execute(sa.select(snapshots.c.payload).where(snapshots.c.id == snapshot_id)).scalar_one()
+        digest = _digest(data)
+    except (TypeError, ValueError, UnicodeError):
+        raise ValueError("Malformed evidence snapshot payload") from None
+    if not isinstance(data, dict) or digest != snapshot_id:
+        raise ValueError("Evidence snapshot content does not match its ID")
+    if data.get("format_version") != FORMAT_VERSION:
+        raise ValueError("Unsupported evidence snapshot version")
+    return data
+
+
+def get_run_snapshot_id(conn, run_id):
+    """Return the immutable snapshot ID linked to a run, or None for an unlinked run."""
+    canonical_id = str(UUID(str(run_id)))
+    return conn.execute(sa.select(run_evidence.c.snapshot_id).where(
+        run_evidence.c.run_id == canonical_id)).scalar_one_or_none()
+
+
+def link_run_snapshot(conn, run_id, snapshot_id):
+    """Link once, allowing identical retries but never replacing existing evidence."""
+    canonical_id = str(UUID(str(run_id)))
+    conn.execute(_insert(conn, run_evidence).values(run_id=canonical_id, snapshot_id=snapshot_id)
+                 .on_conflict_do_nothing(index_elements=[run_evidence.c.run_id]))
+    if get_run_snapshot_id(conn, canonical_id) != snapshot_id:
+        raise ValueError("Run is already linked to a different evidence snapshot")
+
+
 def persist_snapshot(conn, snapshot):
     """Persist exact inputs atomically; caller owns transaction and job fencing.
 
@@ -96,12 +138,12 @@ def persist_snapshot(conn, snapshot):
     not a claim that other fields, records or the enclosing project succeeded.
     """
     data = _payload(snapshot)
-    encoded = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False, allow_nan=False)
-    digest = sha256(encoded.encode()).hexdigest()
+    digest = _digest(data)
     window = data["window"]
     conn.execute(_insert(conn, snapshots).values(id=digest, connection_id=snapshot.connection,
         window_start=window["start"], window_end=window["end"], as_of=window["as_of"],
         format_version=FORMAT_VERSION, payload=data).on_conflict_do_nothing(index_elements=[snapshots.c.id]))
+    _verified_payload(conn, digest)
     for kind in ("projects", "repositories", "builds"):
         for record in data[kind]:
             identity = record["identity"]
@@ -125,20 +167,31 @@ def persist_snapshot(conn, snapshot):
 
 def load_snapshot(conn, snapshot_id):
     """Read the exact persisted observation, including its original as-of and field states."""
-    data = conn.execute(sa.select(snapshots.c.payload).where(snapshots.c.id == snapshot_id)).scalar_one()
-    if data["format_version"] != FORMAT_VERSION:
-        raise ValueError("unsupported evidence snapshot version")
-    window = Window(*(datetime.fromisoformat(data["window"][key]) for key in ("start", "end", "as_of")))
-    result = Snapshot(data["connection"], window, frozenset(data["capabilities"]))
-    for kind in ("projects", "repositories", "builds"):
-        for item in data[kind]:
-            fields = {}
-            for name, ev in item["fields"].items():
-                fields[name] = Evidence(ev["value"], EvidenceState(ev["state"]), ev["source"],
-                    datetime.fromisoformat(ev["observed_at"]) if ev["observed_at"] else None,
-                    ev["error_code"], ev["detail"], ev["fresh_as_of"])
-            getattr(result, kind).append(Record(Identity(**item["identity"]), fields))
-    return result
+    data = _verified_payload(conn, snapshot_id)
+    try:
+        window = Window(*(datetime.fromisoformat(data["window"][key]) for key in ("start", "end", "as_of")))
+        result = Snapshot(data["connection"], window, frozenset(data["capabilities"]))
+        for name in ("collection_started_at", "collection_completed_at"):
+            if data.get(name):
+                setattr(result, name, datetime.fromisoformat(data[name]))
+        for kind in ("projects", "repositories", "builds"):
+            for item in data[kind]:
+                fields = {}
+                for name, ev in item["fields"].items():
+                    fields[name] = Evidence(ev["value"], EvidenceState(ev["state"]), ev["source"],
+                        datetime.fromisoformat(ev["observed_at"]) if ev["observed_at"] else None,
+                        ev["error_code"], ev["detail"], ev["fresh_as_of"])
+                getattr(result, kind).append(Record(Identity(**item["identity"]), fields))
+        reconstructed = _payload(result)
+        # Early format-1 snapshots predate collection timing fields.
+        for name in ("collection_started_at", "collection_completed_at"):
+            if name not in data:
+                reconstructed.pop(name)
+        if reconstructed != data:
+            raise ValueError
+        return result
+    except (AttributeError, KeyError, TypeError, ValueError, OverflowError):
+        raise ValueError("Malformed evidence snapshot payload") from None
 
 
 async def collect_full_window(provider, projects, window):

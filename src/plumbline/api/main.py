@@ -14,7 +14,7 @@ import logging
 import secrets
 import os
 from datetime import date, datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from urllib.parse import quote
 from pydantic import ValidationError
 
@@ -24,11 +24,13 @@ from plumbline.config.settings import Settings
 from plumbline.auth.guard import install_guard
 from plumbline.auth.router import create_router
 from plumbline.persistence.models import session_for
-from plumbline.api.models import CollectionConfig
+from plumbline.api.demo import router as demo_router
+from plumbline.api.models import CollectionConfig, RunRequest
+from plumbline.connections.router import create_router as create_connections_router
 from plumbline.jobs import queue
+from plumbline.measurements.router import create_router as create_measurements_router
 from plumbline.persistence.models import init_engine_and_tables
-from plumbline.config.exemptions import ExemptionManager, ExemptionRule, ExemptionConfig
-from plumbline.config.access import checked_path
+from plumbline.config.exemptions import ExemptionManager, ExemptionRule
 from plumbline import __version__ as TOOL_VERSION
 from plumbline.utils.logging import configure_logging
 
@@ -58,14 +60,10 @@ def get_engine(settings: Settings = Depends(get_settings)) -> Engine:
     return init_engine_and_tables(db_url, allow_create_all=False)
 
 
-# Static mount for artifacts and UI
-EXPORTS_DIR = checked_path("exports").resolve()
-EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
-
 UI_DIR = Path(__file__).parent / "ui"
 DIST_DIR = Path(__file__).resolve().parents[3] / "frontend" / "dist"
 ACTIVE_UI_DIR = DIST_DIR if (DIST_DIR / "index.html").is_file() else UI_DIR
-SPA_ROUTES = {"", "tokens", "users", "audit", "connections"}
+SPA_ROUTES = {"", "tokens", "users", "audit", "connections", "demo"}
 
 
 class AppStaticFiles(StaticFiles):
@@ -110,9 +108,9 @@ app.include_router(create_router(get_db, secure_cookie=(
     _cookie_setting.cookie_secure if _cookie_setting.cookie_secure is not None
     else _cookie_setting.run_env not in {"local", "ci"}
 )))
-from plumbline.connections.router import create_router as create_connections_router
-
 app.include_router(create_connections_router(get_db))
+app.include_router(create_measurements_router(get_db))
+app.include_router(demo_router)
 install_guard(app, request_database_url, public_ui=public_ui)
 if ACTIVE_UI_DIR.exists():
     app.mount("/ui", AppStaticFiles(directory=str(ACTIVE_UI_DIR), html=True), name="ui")
@@ -171,10 +169,10 @@ def healthz(settings: Settings = Depends(get_settings)):
 
 
 @app.post("/v1/runs", status_code=202)
-def trigger_run(config: CollectionConfig, settings: Settings = Depends(get_settings)):
+def trigger_run(config: RunRequest, settings: Settings = Depends(get_settings)):
     from plumbline.connections.execution import ConnectionValidationError
     try:
-        run_id = queue.enqueue(get_engine(settings), config, settings)
+        run_id = queue.enqueue(get_engine(settings), CollectionConfig.model_validate(config.model_dump()), settings)
     except ConnectionValidationError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
@@ -183,29 +181,51 @@ def trigger_run(config: CollectionConfig, settings: Settings = Depends(get_setti
     return {"id": run_id, "message": "Accepted"}
 
 
-def _run_record(row):
+def _run_record(row, snapshot_id=None):
     import json
     started, finished = _db_datetime(row[2]), _db_datetime(row[3])
     result = row[6]
     if isinstance(result, str):
         result = json.loads(result)
     result = result or {}
+    directory = Path(row[5]) if row[5] else None
+    public_dir = None
+    if directory:
+        if directory.name == row[0]:
+            public_dir = row[0]
+        elif directory.parent.name == row[0]:
+            try:
+                if str(UUID(directory.name)) == directory.name:
+                    public_dir = f"{row[0]}/{directory.name}"
+            except ValueError:
+                pass
+    outputs = {}
+    for key, value in (result.get("outputs") or {}).items():
+        if isinstance(value, str):
+            path = Path(value)
+            try:
+                relative = path.relative_to(directory) if directory else path
+                if relative.is_absolute() or ".." in relative.parts:
+                    raise ValueError("Invalid output path")
+                outputs[key] = str(relative)
+            except ValueError:
+                outputs[key] = path.name
     return {"id": row[0], "status": row[1], "started_at": started, "finished_at": finished,
             "duration_seconds": (finished - started).total_seconds() if finished and started else None,
-            "error": row[4], "artifacts_dir": row[5], "outputs": result.get("outputs", {}),
-            "completeness": result.get("completeness"), "assessment_status": result.get("assessment_status"),
+            "error": row[4], "artifacts_dir": public_dir, "outputs": outputs,
+            "completeness": result.get("completeness"), "assessment_status": result.get("assessment_status"), "assessment_error": result.get("assessment_error"),
             "repositories": result.get("repositories", {}), "attempt": result.get("attempt", 0),
             "max_attempts": result.get("max_attempts"), "recovery_reason": result.get("recovery_reason"),
-            "snapshot_id": result.get("snapshot_id")}
+            "snapshot_id": snapshot_id or result.get("snapshot_id")}
 
 
 @app.get("/v1/runs/{id}")
 def get_run_status(id: UUID, settings: Settings = Depends(get_settings)):
     with get_engine(settings).connect() as conn:
-        row = conn.execute(text("SELECT CAST(r.id AS TEXT), r.status, r.started_at, r.finished_at, r.error, r.artifacts_dir, j.result FROM runs r LEFT JOIN jobs j ON j.run_id=r.id WHERE r.id=:id"), {"id": str(id)}).first()
+        row = conn.execute(text("SELECT CAST(r.id AS TEXT), r.status, r.started_at, r.finished_at, r.error, r.artifacts_dir, j.result, e.snapshot_id FROM runs r LEFT JOIN jobs j ON j.run_id=r.id LEFT JOIN run_evidence e ON e.run_id=r.id WHERE r.id=:id"), {"id": str(id)}).first()
     if not row:
         raise HTTPException(status_code=404, detail="Run not found")
-    return _run_record(row)
+    return _run_record(row, snapshot_id=row[7])
 
 
 async def _cancel_run_impl(id: UUID, settings: Settings):
@@ -250,7 +270,7 @@ def delete_run_data(id: UUID, settings: Settings = Depends(get_settings)):
             existing_job = conn.execute(text("SELECT status FROM jobs WHERE run_id=:id"), {"id": run_id_str}).scalar()
             if existing_job and not active:
                 raise HTTPException(status_code=409, detail="Cannot delete an active run")
-            snapshots = conn.execute(text("SELECT (SELECT COUNT(*) FROM raw_metrics WHERE run_id=:id) + (SELECT COUNT(*) FROM metrics WHERE run_id=:id)"), {"id": run_id_str}).scalar()
+            snapshots = conn.execute(text("SELECT (SELECT COUNT(*) FROM raw_metrics WHERE run_id=:id) + (SELECT COUNT(*) FROM metrics WHERE run_id=:id) + (SELECT COUNT(*) FROM run_evidence WHERE run_id=:id) + (SELECT COUNT(*) FROM metric_measurements WHERE run_id=:id)"), {"id": run_id_str}).scalar()
             if snapshots:
                 raise HTTPException(status_code=409, detail="Cannot delete a run with stored snapshots")
             if run_row[2] in ("queued", "running"):
@@ -277,7 +297,7 @@ def delete_run_data(id: UUID, settings: Settings = Depends(get_settings)):
 
 @app.get("/v1/runs")
 def list_runs(limit: int = 20, status: str | None = None, settings: Settings = Depends(get_settings)):
-    query = "SELECT CAST(r.id AS TEXT), r.status, r.started_at, r.finished_at, r.error, r.artifacts_dir, j.result, r.run_label FROM runs r LEFT JOIN jobs j ON j.run_id=r.id"
+    query = "SELECT CAST(r.id AS TEXT), r.status, r.started_at, r.finished_at, r.error, r.artifacts_dir, j.result, r.run_label, e.snapshot_id FROM runs r LEFT JOIN jobs j ON j.run_id=r.id LEFT JOIN run_evidence e ON e.run_id=r.id"
     params = {"limit": max(0, limit)}
     if status:
         query += " WHERE r.status=:status"
@@ -285,57 +305,77 @@ def list_runs(limit: int = 20, status: str | None = None, settings: Settings = D
     query += " ORDER BY COALESCE(r.finished_at, r.started_at, r.executed_at) DESC LIMIT :limit"
     with get_engine(settings).connect() as conn:
         rows = conn.execute(text(query), params).all()
-    return [{**_run_record(row), "run_label": row[7]} for row in rows]
+    return [{**_run_record(row, snapshot_id=row[8]), "run_label": row[7]} for row in rows]
+
+
+def _validated_artifact_directory(value: str, run_id: str, root: Path) -> Path:
+    # Worker reports belong to a UUID attempt directly beneath their run.
+    root = root.resolve()
+    directory = Path(value).absolute()
+    try:
+        parts = directory.relative_to(root).parts
+        if len(parts) not in (1, 2) or parts[0] != run_id:
+            raise ValueError("Unexpected artifact owner")
+        if len(parts) == 2 and str(UUID(parts[1])) != parts[1]:
+            raise ValueError("Unexpected attempt identity")
+        cursor = root
+        for part in parts:
+            cursor /= part
+            if cursor.is_symlink():
+                raise ValueError("Linked artifact directory")
+        if directory.resolve() != directory:
+            raise ValueError("Noncanonical artifact directory")
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Invalid artifacts directory")
+    if not directory.is_dir():
+        raise HTTPException(status_code=404, detail="Artifacts directory missing")
+    return directory
+
+
+def _artifact_directory(id: UUID, settings: Settings) -> Path:
+    run_id_str = str(id)
+    with get_engine(settings).connect() as conn:
+        row = conn.execute(text("SELECT artifacts_dir FROM runs WHERE id=:id"), {"id": run_id_str}).fetchone()
+    if not row or not row[0]:
+        raise HTTPException(status_code=404, detail="Artifacts not found")
+    return _validated_artifact_directory(row[0], run_id_str, settings.exports_dir)
+
+
+def _has_link_below(directory: Path, relative: Path) -> bool:
+    cursor = directory
+    for part in relative.parts:
+        cursor /= part
+        if cursor.is_symlink():
+            return True
+    return False
 
 
 @app.get("/v1/runs/{id}/artifacts")
 async def list_artifacts(id: UUID, settings: Settings = Depends(get_settings)):
-    run_id_str = str(id)
-    art_dir_val: Optional[str] = None
-    with get_engine(settings).connect() as conn:
-        row = conn.execute(text("SELECT artifacts_dir FROM runs WHERE id=:id"), {"id": run_id_str}).fetchone()
-    if row and row[0]:
-        art_dir_val = row[0]
-    if not art_dir_val:
-        raise HTTPException(status_code=404, detail="Artifacts not found")
-
-    art_dir = Path(art_dir_val).resolve()
-
-    try:
-        if art_dir == EXPORTS_DIR or art_dir.name != run_id_str:
-            raise ValueError("Invalid run-owned directory")
-        art_dir.relative_to(EXPORTS_DIR)
-    except ValueError:
-        logger.warning(f"Artifacts directory {art_dir} is outside EXPORTS_DIR {EXPORTS_DIR}")
-        raise HTTPException(status_code=403, detail="Invalid artifacts directory")
-
-    if not art_dir.exists():
-        raise HTTPException(status_code=404, detail="Artifacts directory missing")
+    art_dir = _artifact_directory(id, settings)
 
     files = []
     for p in art_dir.glob("**/*"):
         try:
-            if p.is_symlink() or not p.is_file():
+            run_rel = p.relative_to(art_dir)
+            if _has_link_below(art_dir, run_rel) or not p.is_file():
                 continue
             resolved = p.resolve()
             resolved.relative_to(art_dir)
-            rel = resolved.relative_to(EXPORTS_DIR)
-            run_rel = resolved.relative_to(art_dir)
-            files.append({"name": str(rel), "size_bytes": p.stat().st_size, "url": f"/v1/runs/{id}/artifacts/{quote(str(run_rel), safe='/')}"})
+            files.append({"name": str(run_rel), "size_bytes": p.stat().st_size, "url": f"/v1/runs/{id}/artifacts/{quote(str(run_rel), safe='/')}"})
         except Exception:  # noqa: BLE001
             continue
-    return {"id": str(id), "artifacts_dir": str(art_dir), "files": files}
+    return {"id": str(id), "artifacts_dir": str(art_dir.relative_to(settings.exports_dir.resolve())), "files": files}
 
 
 @app.get("/v1/runs/{id}/artifacts/{file_path:path}")
 async def download_artifact(id: UUID, file_path: str, settings: Settings = Depends(get_settings)):
-    listing = await list_artifacts(id, settings)
-    art_dir = Path(listing["artifacts_dir"])
+    art_dir = _artifact_directory(id, settings)
     relative = Path(file_path)
     if relative.is_absolute() or ".." in relative.parts:
         raise HTTPException(status_code=403, detail="Invalid artifact path")
     candidate = art_dir / relative
-    if any(part.is_symlink() for part in [candidate, *candidate.parents] if part != art_dir.parent):
+    if _has_link_below(art_dir, relative):
         raise HTTPException(status_code=403, detail="Invalid artifact path")
     resolved = candidate.resolve()
     try:
@@ -349,27 +389,7 @@ async def download_artifact(id: UUID, file_path: str, settings: Settings = Depen
 
 @app.get("/v1/runs/{id}/artifacts.zip")
 async def download_artifacts_zip(id: UUID, background_tasks: BackgroundTasks, settings: Settings = Depends(get_settings)):
-    run_id_str = str(id)
-    art_dir_val: Optional[str] = None
-    with get_engine(settings).connect() as conn:
-        row = conn.execute(text("SELECT artifacts_dir FROM runs WHERE id=:id"), {"id": run_id_str}).fetchone()
-    if row and row[0]:
-        art_dir_val = row[0]
-    if not art_dir_val:
-        raise HTTPException(status_code=404, detail="Artifacts not found")
-
-    art_dir = Path(art_dir_val).resolve()
-
-    try:
-        if art_dir == EXPORTS_DIR or art_dir.name != run_id_str:
-            raise ValueError("Invalid run-owned directory")
-        art_dir.relative_to(EXPORTS_DIR)
-    except ValueError:
-        logger.warning(f"Artifacts directory {art_dir} is outside EXPORTS_DIR {EXPORTS_DIR}")
-        raise HTTPException(status_code=403, detail="Invalid artifacts directory")
-
-    if not art_dir.exists():
-        raise HTTPException(status_code=404, detail="Artifacts directory missing")
+    art_dir = _artifact_directory(id, settings)
 
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".zip", delete=False) as tmp:
         zip_path = Path(tmp.name)
@@ -378,7 +398,7 @@ async def download_artifacts_zip(id: UUID, background_tasks: BackgroundTasks, se
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for p in art_dir.glob("**/*"):
                 try:
-                    if p.is_symlink() or not p.is_file():
+                    if _has_link_below(art_dir, p.relative_to(art_dir)) or not p.is_file():
                         continue
                     resolved = p.resolve()
                     resolved.relative_to(art_dir)
@@ -503,7 +523,7 @@ async def put_project_exemption(
         ex[key] = rule.model_dump(mode="json")
         data.update(version=str(data.get("version") or "1.0"), exemptions=ex)
         data.setdefault("pattern_exemptions", [])
-        ExemptionConfig.model_validate(data)
+        ExemptionManager._validate_strict(data)
     except ValidationError as exc:
         raise HTTPException(status_code=422, detail=exc.errors(include_url=False, include_context=False))
     except (ValueError, TypeError, yaml.YAMLError) as exc:

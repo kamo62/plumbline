@@ -176,6 +176,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/connections/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Providers */
+        get: operations["providers_connections_providers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/connections": {
         parameters: {
             query?: never;
@@ -222,6 +239,111 @@ export interface paths {
         put?: never;
         /** Test Connection */
         post: operations["test_connection_connections__connection_id__test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runs/{run_id}/measurements/test-pass-rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Measurement */
+        post: operations["create_measurement_v1_runs__run_id__measurements_test_pass_rate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/runs/{run_id}/measurements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Measurements */
+        get: operations["list_measurements_v1_runs__run_id__measurements_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/measurements/{measurement_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Measurement */
+        get: operations["get_measurement_v1_measurements__measurement_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/measurements/{measurement_id}/export.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Measurement */
+        get: operations["export_measurement_v1_measurements__measurement_id__export_json_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/measurements/{measurement_id}/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Verify Measurement */
+        get: operations["verify_measurement_v1_measurements__measurement_id__verification_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/demo/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Demo Providers
+         * @description Show the baseline evidence published in the four fictional SCM packs.
+         */
+        get: operations["get_demo_providers_v1_demo_providers_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -486,13 +608,135 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** DemoProvider */
+        DemoProvider: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /** Api Version */
+            api_version: string;
+            window: components["schemas"]["DemoWindow"];
+            /** Repositories */
+            repositories: components["schemas"]["DemoRepository"][];
+            /** Responses */
+            responses: components["schemas"]["DemoResponse"][];
+            /** Facts */
+            facts: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Limitations */
+            limitations: string[];
+        };
+        /** DemoProviders */
+        DemoProviders: {
+            /** Providers */
+            providers: components["schemas"]["DemoProvider"][];
+        };
+        /** DemoRepository */
+        DemoRepository: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+        };
+        /** DemoResponse */
+        DemoResponse: {
+            /** Name */
+            name: string;
+            /** Source */
+            source: string;
+            /** Status */
+            status: number;
+        };
+        /** DemoWindow */
+        DemoWindow: {
+            /** Start */
+            start: string;
+            /** End Exclusive */
+            end_exclusive: string;
+            /** Observed At */
+            observed_at: string;
+        };
+        /** HTTPValidationError */
+        HTTPValidationError: {
+            /** Detail */
+            detail?: components["schemas"]["ValidationError"][];
+        };
+        JsonValue: unknown;
+        /** Login */
+        Login: {
+            /** Username */
+            username: string;
+            /** Password */
+            password: string;
+        };
+        /** NewUser */
+        NewUser: {
+            /** Username */
+            username: string;
+            /** Password */
+            password: string;
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "viewer" | "admin";
+        };
+        /** Password */
+        Password: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
+        };
+        /** ProviderMetadata */
+        ProviderMetadata: {
+            /** Id */
+            id: string;
+            /** Label */
+            label: string;
+            /**
+             * Status
+             * @description diagnostic_only identifies synthetic development evidence, including queued collections; it does not disable runs
+             * @enum {string}
+             */
+            status: "implemented_live_unverified" | "diagnostic_only";
+            /**
+             * Capabilities
+             * @description Implemented evidence families; not a guarantee of complete or live-verified evidence
+             */
+            capabilities: string[];
+            requirements: components["schemas"]["ProviderRequirements"];
+        };
+        /** ProviderRequirements */
+        ProviderRequirements: {
+            /**
+             * Organisation
+             * @enum {string}
+             */
+            organisation: "required" | "not_supported";
+            /**
+             * Projects
+             * @enum {string}
+             */
+            projects: "required" | "optional";
+            /**
+             * Credential
+             * @enum {string}
+             */
+            credential: "required_for_execution" | "not_supported";
+        };
         /**
-         * CollectionConfig
-         * @description API request model for triggering metrics collection.
-         *
-         *     Mirrors CLI collect_raw options.
+         * RunRequest
+         * @description Remote callers use server-owned output storage; CLI keeps custom paths.
          */
-        CollectionConfig: {
+        RunRequest: {
+            /**
+             * Connection Id
+             * @description Saved connection identifier
+             */
+            connection_id?: string | null;
             /**
              * Org
              * @description Organization identifier (overrides PLUMBLINE_AZURE_DEVOPS_ORG)
@@ -528,9 +772,9 @@ export interface components {
             write_db: boolean;
             /**
              * Output Path
-             * @description Custom output path (default: exports/{run_id}/metrics)
+             * @description API runs use server-owned output storage
              */
-            output_path?: string | null;
+            output_path?: null;
             /**
              * Include Maturity
              * @description Include maturity assessment
@@ -557,43 +801,16 @@ export interface components {
              * @description Commit SHA (for metadata)
              */
             commit_sha?: string | null;
+        };
+        /** TestPassRateRequest */
+        TestPassRateRequest: {
+            /** Minimum Sample */
+            minimum_sample: number;
             /**
-             * Db Strict
-             * @description Fail-fast if DB requested but unavailable
-             * @default false
+             * Population Policy
+             * @constant
              */
-            db_strict: boolean;
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
-        };
-        /** Login */
-        Login: {
-            /** Username */
-            username: string;
-            /** Password */
-            password: string;
-        };
-        /** NewUser */
-        NewUser: {
-            /** Username */
-            username: string;
-            /** Password */
-            password: string;
-            /**
-             * Role
-             * @enum {string}
-             */
-            role: "viewer" | "admin";
-        };
-        /** Password */
-        Password: {
-            /** Current Password */
-            current_password: string;
-            /** New Password */
-            new_password: string;
+            population_policy: "ado-reported-total/v1";
         };
         /** TokenRequest */
         TokenRequest: {
@@ -955,6 +1172,26 @@ export interface operations {
             };
         };
     };
+    providers_connections_providers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderMetadata"][];
+                };
+            };
+        };
+    };
     list_connections_connections_get: {
         parameters: {
             query?: never;
@@ -1057,6 +1294,185 @@ export interface operations {
             };
         };
     };
+    create_measurement_v1_runs__run_id__measurements_test_pass_rate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestPassRateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_measurements_v1_runs__run_id__measurements_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_measurement_v1_measurements__measurement_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                measurement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_measurement_v1_measurements__measurement_id__export_json_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                measurement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_measurement_v1_measurements__measurement_id__verification_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                measurement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_demo_providers_v1_demo_providers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DemoProviders"];
+                };
+            };
+        };
+    };
     root__get: {
         parameters: {
             query?: never;
@@ -1138,7 +1554,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CollectionConfig"];
+                "application/json": components["schemas"]["RunRequest"];
             };
         };
         responses: {

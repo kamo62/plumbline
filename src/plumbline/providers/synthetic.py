@@ -9,8 +9,8 @@ WINDOW = Window(datetime(2026, 1, 1, tzinfo=timezone.utc), datetime(2026, 2, 1, 
 
 # Both projects intentionally have build ID 7. PR 11 opened before the window.
 DATA = {
-    "Alpha": {"id": "p1", "repos": [{"id": "r1", "name": "one"}, {"id": "r2", "name": "two"}], "prs": {"r1": [{"pullRequestId": 11, "creationDate": "2025-12-20T00:00:00Z", "closedDate": "2026-01-10T00:00:00Z", "createdBy": {"id": "author"}, "reviewers": [{"id": "reviewer", "vote": 10}]}], "r2": []}, "build": {"id": 7, "queueTime": "2026-01-15T00:00:00Z", "repository": {"id": "r1"}}, "tests": {"results": [{"total": 10, "passed": 8, "failed": 2, "skipped": 0, "not_executed": 0}], "unlinked_runs": 1}, "coverage": {"value": [{"lineCoverage": 80}]}, "security": [{"name": "scan", "result": "failed"}]},
-    "Beta": {"id": "p2", "repos": [{"id": "r3", "name": "three"}], "prs": {"r3": [{"pullRequestId": 12, "creationDate": "2026-01-20T00:00:00Z", "createdBy": {"id": "other"}, "reviewers": []}]}, "build": {"id": 7, "queueTime": "2026-01-25T00:00:00Z", "repository": {"id": "r3"}}, "tests": None, "coverage": {}, "security": []},
+    "Alpha": {"id": "p1", "repos": [{"id": "r1", "name": "one"}, {"id": "r2", "name": "two"}], "prs": {"r1": [{"pullRequestId": 11, "creationDate": "2025-12-20T00:00:00Z", "closedDate": "2026-01-10T00:00:00Z", "createdBy": {"id": "author"}, "reviewers": [{"id": "reviewer", "vote": 10}]}], "r2": []}, "build": {"id": 7, "queueTime": "2026-01-15T00:00:00Z", "finishTime": "2026-01-15T00:00:00Z", "status": "completed", "result": "succeeded", "repository": {"id": "r1"}}, "tests": {"results": [{"total": 10, "passed": 8, "failed": 2, "skipped": 0, "not_executed": 0}], "unlinked_runs": 1}, "coverage": {"value": [{"lineCoverage": 80}]}, "security": [{"name": "scan", "result": "failed"}]},
+    "Beta": {"id": "p2", "repos": [{"id": "r3", "name": "three"}], "prs": {"r3": [{"pullRequestId": 12, "creationDate": "2026-01-20T00:00:00Z", "createdBy": {"id": "other"}, "reviewers": []}]}, "build": {"id": 7, "queueTime": "2026-01-25T00:00:00Z", "finishTime": "2026-01-25T00:00:00Z", "status": "completed", "result": "succeeded", "repository": {"id": "r3"}}, "tests": None, "coverage": {}, "security": []},
 }
 
 
@@ -36,12 +36,12 @@ class SyntheticProvider:
             item = DATA[name]
             pid = item["id"]
             project = {"id": pid, "name": name}
-            result.projects.append(Record(Identity(self.connection_id, pid), {"project": ev(project, "get_project"), "repositories": ev(item["repos"], "get_repositories"), "builds": ev([item["build"]], "get_builds")}))
+            result.projects.append(Record(Identity(self.connection_id, pid), {"project": ev(project, "get_project"), "repositories": ev(item["repos"], "get_repositories"), "builds": ev([item["build"]], "get_builds"), "policy_configurations": ev([], "get_policy_configurations"), "policy_types": ev([], "get_policy_types")}))
             for repo in item["repos"]:
                 rid = repo["id"]
-                result.repositories.append(Record(Identity(self.connection_id, pid, rid), {"repository": ev(repo, "get_repositories"), "commits": ev([], "get_commits"), "branches": ev([], "get_branches"), "pull_requests": ev(item["prs"][rid], "get_pull_requests"), "policies": ev([], "get_branch_policies")}))
+                result.repositories.append(Record(Identity(self.connection_id, pid, rid), {"repository": ev(repo, "get_repositories"), "commits": ev([], "get_commits"), "branches": ev([], "get_branches"), "pull_requests": ev(item["prs"][rid], "get_pull_requests")}))
             tests = ev(item["tests"], "get_test_results", EvidenceState.PARTIAL if name == "Alpha" else EvidenceState.FAILED, "unlinked_test_runs" if name == "Alpha" else "request_failed")
             if name == "Beta":
                 tests = Evidence(None, EvidenceState.FAILED, "get_test_results", OBSERVED_AT, "request_failed", "RuntimeError", True)
-            result.builds.append(Record(Identity(self.connection_id, pid, build="7"), {"build": ev(item["build"], "get_builds"), "tests": tests, "coverage": ev(item["coverage"], "get_code_coverage"), "security_scans": ev(item["security"], "get_security_scan_results", EvidenceState.PARTIAL, "artifact_name_heuristic")}))
+            result.builds.append(Record(Identity(self.connection_id, pid, build="7"), {"build": ev(item["build"], "get_builds"), "tests": tests, "coverage": ev(item["coverage"], "get_code_coverage", EvidenceState.PARTIAL if name == "Alpha" else None, "malformed_coverage" if name == "Alpha" else None), "security_scans": ev(item["security"], "get_security_scan_results", EvidenceState.PARTIAL, "artifact_name_heuristic")}))
         return result

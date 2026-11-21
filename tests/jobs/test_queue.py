@@ -4,8 +4,6 @@ from datetime import timedelta
 from types import SimpleNamespace
 
 import pytest
-from alembic.migration import MigrationContext
-from alembic.operations import Operations
 from sqlalchemy import select, update
 from sqlmodel import Session
 
@@ -13,18 +11,15 @@ from plumbline.api.models import CollectionConfig
 from plumbline.jobs import queue
 from plumbline.jobs.models import Job
 from plumbline.jobs.worker import run_once
-from plumbline.persistence import baseline, revision_0002_jobs
+from plumbline.persistence.migrations import migrate
 from plumbline.persistence.models import Run, init_engine_and_tables
 
 
 @pytest.fixture
 def engine(tmp_path):
-    engine = init_engine_and_tables(f"sqlite:///{tmp_path / 'test.db'}")
-    with engine.begin() as conn:
-        op = Operations(MigrationContext.configure(conn))
-        baseline.upgrade(op)
-        revision_0002_jobs.upgrade(op)
-    return engine
+    url = f"sqlite:///{tmp_path / 'test.db'}"
+    migrate(url)
+    return init_engine_and_tables(url)
 
 
 @pytest.fixture
@@ -89,10 +84,7 @@ def test_api_enqueue_and_restart_visible_without_provider(engine, settings, monk
     monkeypatch.setattr(AzureDevOpsClient, "__init__", lambda *args: pytest.fail("provider called"))
     main.app.dependency_overrides[main.get_settings] = lambda: settings
     try:
-        from plumbline.persistence.revision_0003_auth import upgrade as auth_upgrade
         from plumbline.auth.service import bootstrap
-        with engine.begin() as conn:
-            auth_upgrade(Operations(MigrationContext.configure(conn)))
         settings.database_url = str(engine.url)
         with Session(engine) as db:
             user = bootstrap(db, "admin", "initial-password-123")
@@ -127,12 +119,12 @@ def test_real_runner_selected_projects_partial_snapshot(engine, monkeypatch):
             pass
         async def close(self):
             pass
-    class Collector:
-        async def collect_all_projects_raw_data(self, projects):
-            selected.extend(projects)
-            return {"repositories": [{"id": "r1"}], "completeness": {"complete": False, "failures": [{"project": "two"}]}}
+    async def collect(projects, window):
+        selected.extend(projects)
+        return {"repositories": [{"id": "r1"}], "completeness": {"complete": False, "failures": [{"project": "two"}]}}
+    from tests.provider_stub import inject
+    inject(monkeypatch, collect)
     monkeypatch.setattr(runner, "AzureDevOpsClient", Client)
-    monkeypatch.setattr(runner.MetricsServiceFactory, "create_service", lambda *a, **kw: Collector())
     run_id = queue.enqueue(engine, CollectionConfig(projects=["one", "two"], write_files=False), settings)
     assert asyncio.run(run_once(engine, settings))
     with Session(engine) as session:
@@ -290,15 +282,15 @@ def test_stale_real_runner_cannot_write_attempt_files(engine, tmp_path, monkeypa
             pass
         async def close(self):
             pass
-    class Collector:
-        async def collect_all_raw_data(self, project):
-            with Session(engine) as session, session.begin():
-                session.execute(update(Job).where(Job.run_id == run_id).values(
-                    lease_until=queue.now() - timedelta(seconds=1)))
-            assert queue.claim(engine, 60)
-            return {"repositories": [{"id": "synthetic"}], "completeness": {"complete": True}}
+    async def collect(projects, window):
+        with Session(engine) as session, session.begin():
+            session.execute(update(Job).where(Job.run_id == run_id).values(
+                lease_until=queue.now() - timedelta(seconds=1)))
+        assert queue.claim(engine, 60)
+        return {"repositories": [{"id": "synthetic"}], "completeness": {"complete": True}}
+    from tests.provider_stub import inject
+    inject(monkeypatch, collect)
     monkeypatch.setattr(runner, "AzureDevOpsClient", Client)
-    monkeypatch.setattr(runner.MetricsServiceFactory, "create_service", lambda *a, **kw: Collector())
     asyncio.run(run_once(engine, settings))
     assert not list(tmp_path.rglob("*.json"))
     assert not list(tmp_path.rglob("*.xlsx"))
@@ -346,9 +338,10 @@ def test_slow_file_export_holds_fence_against_reclaim(engine, tmp_path, monkeypa
             pass
         async def close(self):
             pass
-    class Collector:
-        async def collect_all_raw_data(self, project):
-            return {"repositories": [{"id": "synthetic"}], "completeness": {"complete": True}}
+    async def collect(projects, window):
+        return {"repositories": [{"id": "synthetic"}], "completeness": {"complete": True}}
+    from tests.provider_stub import inject
+    inject(monkeypatch, collect)
     class SlowFileSink:
         def persist(self, payload, context):
             from pathlib import Path
@@ -358,7 +351,6 @@ def test_slow_file_export_holds_fence_against_reclaim(engine, tmp_path, monkeypa
             path.write_text("synthetic")
             return {"raw_json": str(path)}
     monkeypatch.setattr(runner, "AzureDevOpsClient", Client)
-    monkeypatch.setattr(runner.MetricsServiceFactory, "create_service", lambda *a, **kw: Collector())
     monkeypatch.setattr(worker, "FileSink", SlowFileSink)
     def contender():
         assert started.wait(3)

@@ -1,9 +1,9 @@
 # Plumbline
 
-Plumbline is an open-source, self-hosted engineering practice tool for Azure
-DevOps, GitLab, GitHub and Bitbucket Cloud. It brings repository controls, code
-review, CI health, testing and security evidence into one place to help teams
-understand and improve how they build software.
+Plumbline is an open-source, self-hosted engineering practice tool. It collects
+repository controls, code review, CI, testing and security evidence from Azure
+DevOps. An offline demo also shows fictional evidence from GitHub, GitLab and
+Bitbucket Cloud.
 
 The application provides a CLI, a FastAPI service, a web UI and JSON/Excel reports,
 with SQLite and PostgreSQL storage. The package, CLI and image are named
@@ -13,10 +13,10 @@ with SQLite and PostgreSQL storage. The package, CLI and image are named
 
 | Provider | Current status |
 | --- | --- |
-| Azure DevOps | Collection implemented; live API verification remains outstanding |
-| GitLab | Planned |
-| GitHub | Planned |
-| Bitbucket Cloud | Planned |
+| Azure DevOps | Collection implemented and offline demo available. Live API verification remains outstanding. |
+| GitLab | Offline demo available. Collection planned. |
+| GitHub | Offline demo available. Collection planned. |
+| Bitbucket Cloud | Offline demo available. Collection planned. |
 | Synthetic dataset | Available for diagnostics and development; deliberately includes incomplete evidence |
 
 Plumbline is under active development at version 0.1.0. Accounts, saved connections,
@@ -32,8 +32,10 @@ are configurable assessment signals, not a certification or a measure of
 individual developer productivity.
 
 See the [public provider API architecture](docs/provider-api-architecture.md) for
-the evidence available from the planned providers and its limits. Segments and
-Grafana are excluded from the current product direction.
+the evidence available from the planned providers and its limits. The
+[provider evidence research](docs/provider-evidence-research.md) covers capability
+differences, metric definitions and the remaining product and validation questions.
+Segments and Grafana are excluded from the current product direction.
 
 ## Available capabilities
 
@@ -82,11 +84,79 @@ The API queues UI runs; a separate worker must be running to process them.
 
 Visit <http://localhost:8000/ui/> for the application. `/docs` provides the
 authenticated API reference and `/healthz` provides health status. Reports are
-written under the ignored `exports/` directory.
+written under the ignored `exports/` directory by default. Set the same absolute
+`PLUMBLINE_EXPORTS_DIR` for API and worker processes started from different
+directories. Stored report paths are absolute; API listings and output names are
+relative to their run/attempt directory. Existing stored relative paths are not
+migrated. Remote requests cannot choose an output path or internal worker controls;
+the CLI retains its custom-output option.
+
+A separate [metric foundation](docs/metrics/CATALOGUE.md) defines test pass rate
+and merged-PR review coverage with explicit evidence states and candidate coverage.
+It is not connected to production scoring, and does not replace the legacy
+assessment or establish scoring v2 completion. Test pass rate also has an opt-in
+post-collection diagnostic for stored ADO-shaped snapshots: an administrator supplies
+an explicit population policy and minimum sample, then retrieves a frozen result,
+JSON export and verification. It makes no provider requests and does not consume
+the example files in `synthetic_data/`. See the
+[diagnostic contract](docs/metrics/CATALOGUE.md#stored-test-pass-rate-diagnostic)
+and [operations](docs/operations.md#post-collection-test-pass-rate-diagnostic).
+
+Collection uses the provider snapshot as the collection boundary for ADO and
+synthetic runs. The event window is the current calendar year up to collection
+start, with an exclusive end. Live snapshots record collection start and
+completion; their evidence cutoff is completion and individual observation times
+are retained. Explicit historical provider requests retain their requested cutoff;
+observations made later cannot establish historical certainty. Builds are selected by completion time in that window, including builds queued earlier; returned completed builds with unknown finish times remain incomplete evidence. The build list uses the server finish-time lower bound; malformed records hidden by that filter cannot be detected. Running builds observed after the window are excluded. Pull request candidates include old open requests and requests closed in the window; a closure at or after the end leaves historical status uncertain and blocks scoring. Legacy exports use
+a compatibility projection. Incomplete evidence, malformed policy data and ambiguous project-scoped IDs
+block maturity scoring. ADO policy configurations are projected into the existing
+repository and branch policy format with applicable scope provenance. Prefix scopes use documented branch-folder matching; ambiguous non-folder prefixes block scoring for the run. Live verification remains outstanding. Coverage without an uncovered-line count has no inferred percentage; collection and report caveats identify affected builds. The legacy scorer still treats that metric as missing. Test failures use the documented `unanalyzedTests` field; absent failed counts stay unknown in exports. Security scan evidence retains the existing
+artifact-name heuristic and is not proof that a scan ran successfully. Configured
+exemption files must be readable and valid.
+Saved worker runs persist the same fetched snapshot inside the lease fence.
+Database-backed CLI runs now persist the original sanitised provider snapshot too.
+New persisted runs have an immutable run-to-snapshot link, exposed as `snapshot_id`
+in run status and listings. Loading a snapshot checks its content hash before
+reconstructing evidence. This detects inconsistent stored content, not deliberate
+rewriting by someone who controls the database. Existing job snapshot IDs remain
+readable; historical run links are not backfilled. File-only CLI runs do not gain
+database snapshots or replay guarantees.
+
+Authenticated clients can read `GET /connections/providers` for the supported
+ADO/synthetic metadata and connection requirements. Saved-connection validation and
+diagnostics share that registry. GitHub, GitLab and Bitbucket remain planned; no
+custom provider host or additional credential fields are enabled.
 
 Collection uses the full assessment window. Removed segment, delta, minimal and
 execution-profile options are rejected. Each run owns a UUID-named output folder.
 Use `plumbline collect-raw --help` for collection options.
+
+## Offline demo
+
+From a source checkout or the source ZIP, install Python and frontend
+dependencies using the usual toolchain. Build the UI, initialise a local SQLite
+database and start the app:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e '.[dev]'
+(cd frontend && bun install --frozen-lockfile && bun run build)
+plumbline migrate
+plumbline bootstrap-admin --username demo-admin
+python -m uvicorn plumbline.api.main:app --host 127.0.0.1 --port 8000
+```
+
+Open <http://localhost:8000/ui/demo>, sign in with the generated password,
+then set a new password and sign in again. Select a provider to see the
+repositories, evidence window, response inventory and sample facts. The demo
+reads the four checked-in [fictional packs](synthetic_data/README) and marks
+explicitly unknown values as unavailable. Once dependencies are installed, the
+demo needs only the local app and database. It requires no provider credentials,
+worker or provider requests.
+
+See the [initial version status](docs/status.md) for the verification evidence
+and remaining provider work.
 
 ## Development storage
 
@@ -178,11 +248,28 @@ Never commit completed environment files, keys, exports or private organisation 
 - [Public provider API architecture](docs/provider-api-architecture.md): conceptual evidence diagram and vendor references.
 - [Sanitised sample data](samples/README.md): four historical runs with 270 metric records across three projects and nine repositories.
 - [Run request templates](samples/run-requests.json): example collection requests with placeholder connection IDs.
+- [Synthetic provider examples](synthetic_data/README): four entirely fictional,
+  data-only provider JSON packs. They are not live captures, replay adapters or
+  implementations of the planned providers.
 
 Historical samples are aggregate extracts, not raw API responses or validated
 Plumbline v2 assessments. Request templates do not replay those samples.
 
 ## Tests
+
+Source archives include backend/frontend tests, test configuration and helper scripts,
+plus operations, OIDC, provider architecture and accepted architecture decisions under
+`docs/`, including the bounded metric catalogue. Project files and `.gitignore` sit
+directly at the ZIP root, without an enclosing folder or `.git` directory.
+Dependencies, bundled wheels/runtimes, compiled binaries, generated reports/builds,
+screenshots, Docker files and
+agent/task/planning notes remain excluded. The shared `~/Code/package-core.py` reads
+tracked working-tree files; explicitly opt in required new files with `--include-untracked`.
+Each ZIP has an adjacent SHA256 checksum; existing ZIPs and checksums are not overwritten.
+Historical metrics datasets and Storybook assets require the full repository; source
+exports retain only the request templates needed by tests, not those datasets.
+The separate `synthetic_data/` folder is included with its README and four fictional
+provider JSON files. Its original bytes are retained; nothing is wired into the app.
 
 ```bash
 scripts/test-all.sh

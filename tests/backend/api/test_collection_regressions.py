@@ -33,7 +33,7 @@ async def test_test_runs_only_count_explicit_matching_build():
     client.base_url = 'https://dev.azure.com/test-org'
     client._get_aiohttp_session = AsyncMock(return_value=object())
     client.get_paginated_results = AsyncMock(return_value=[
-        {'build': {'id': 42}, 'totalTests': 5, 'passedTests': 4, 'failedTests': 1},
+        {'build': {'id': 42}, 'totalTests': 5, 'passedTests': 4, 'unanalyzedTests': 1},
         {'build': {'id': 43}, 'totalTests': 10, 'passedTests': 10},
         {'totalTests': 20, 'passedTests': 20},
     ])

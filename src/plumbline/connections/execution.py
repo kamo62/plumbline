@@ -1,18 +1,16 @@
 """Resolve saved connections at the queue and execution boundaries."""
-from dataclasses import asdict
-from datetime import datetime
+from dataclasses import fields, is_dataclass, replace
 from enum import Enum
 from contextlib import contextmanager
 import logging
+import base64
 
 from pydantic import SecretStr
 from sqlmodel import Session
 
-from plumbline.config.access import validate_org, validate_target
 from plumbline.connections.models import Connection
 from plumbline.connections.service import CredentialError, decrypt
-from plumbline.providers import SyntheticProvider
-from plumbline.providers.synthetic import WINDOW
+from plumbline.providers.registry import UnsupportedProvider, get_provider
 
 
 class ConnectionValidationError(ValueError):
@@ -23,17 +21,15 @@ def effective_config(session, config):
     item = session.get(Connection, config.connection_id)
     if item is None:
         raise ConnectionValidationError("Connection not found")
-    if item.provider not in {"ado", "synthetic"}:
-        raise ConnectionValidationError("Connection provider is unsupported")
+    try:
+        spec = get_provider(item.provider)
+    except UnsupportedProvider:
+        raise ConnectionValidationError("Connection provider is unsupported") from None
     if config.connection_provider and config.connection_provider != item.provider:
         raise ConnectionValidationError("Connection provider changed")
     try:
-        org = validate_org(item.organisation or "") if item.provider == "ado" else "synthetic"
-        projects = item.config.get("projects") or ([] if item.provider == "ado" else ["Alpha", "Beta"])
-        if not isinstance(projects, list) or not projects or any(not isinstance(p, str) or not p.strip() for p in projects):
-            raise ValueError
-        for project in projects:
-            validate_target(project)
+        org, projects = spec.connection_inputs(item.organisation, item.config, item.credential_ciphertext is not None)
+        org = org if spec.organisation_required else spec.id
     except (ValueError, TypeError, AttributeError):
         raise ConnectionValidationError("Connection configuration is invalid") from None
     if config.org and config.org != org:
@@ -50,7 +46,7 @@ def resolve(engine, config, settings):
     with Session(engine) as session:
         effective, item = effective_config(session, config)
         provider = item.provider
-        if provider == "ado":
+        if get_provider(provider).credential_required_for_execution:
             if not item.credential_ciphertext:
                 raise ConnectionValidationError("Connection credential is missing")
             try:
@@ -62,44 +58,31 @@ def resolve(engine, config, settings):
         return effective, settings, provider
 
 
-def _json(value):
-    if isinstance(value, datetime):
-        return value.isoformat()
-    if isinstance(value, Enum):
-        return value.value
-    if isinstance(value, dict):
-        return {k: _json(v) for k, v in value.items()}
-    if isinstance(value, (list, tuple, set, frozenset)):
-        return [_json(v) for v in value]
-    return value
-
-
-async def synthetic_data(config):
-    """Carry all provider evidence through the existing raw-data sinks without scoring it."""
-    snapshot = await SyntheticProvider(config.connection_id).collect(config.projects, WINDOW)
-    evidence = _json(asdict(snapshot))
-    failures = [{"scope": kind, "project_id": record["identity"]["project"],
-                 "field": name, "state": field["state"], "error": field["error_code"]}
-                for kind in ("projects", "repositories", "builds")
-                for record in evidence[kind] for name, field in record["fields"].items()
-                if field["state"] not in ("observed", "observed_empty")]
-    # This provider's diagnostic evidence is not a complete legacy assessment input.
-    failures.append({"scope": "collection", "error": "Synthetic evidence is not a complete assessment input"})
-    return {"provider": "synthetic", "evidence": evidence,
-            "completeness": {"complete": False, "failures": failures}}, snapshot
-
-
 def redact(value, secret):
     if not secret:
         return value
+    if isinstance(value, Enum):
+        return value
     if isinstance(value, str):
-        return value.replace(secret, "[REDACTED]")
+        normalized = secret.strip().strip('"').strip("'").strip()
+        if not normalized:
+            return value
+        forms = {secret, normalized}
+        if normalized:
+            forms.add(base64.b64encode(f":{normalized}".encode()).decode())
+        for form in sorted((x for x in forms if x), key=len, reverse=True):
+            value = value.replace(form, "[REDACTED]")
+        return value
+    if is_dataclass(value) and not isinstance(value, type):
+        return replace(value, **{field.name: redact(getattr(value, field.name), secret) for field in fields(value)})
     if isinstance(value, dict):
         return {redact(k, secret): redact(v, secret) for k, v in value.items()}
     if isinstance(value, list):
         return [redact(v, secret) for v in value]
     if isinstance(value, tuple):
         return tuple(redact(v, secret) for v in value)
+    if isinstance(value, (set, frozenset)):
+        return type(value)(redact(v, secret) for v in value)
     return value
 
 

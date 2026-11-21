@@ -137,15 +137,17 @@ def projects() -> None:
 @app.command("db-migrate", help="Apply packaged database migrations")
 @app.command("migrate", help="Apply packaged database migrations")
 def db_migrate(
-    check_only: bool = typer.Option(False, "--check", help="Exit 2 if already up to date"),
+    check_only: bool = typer.Option(False, "--check", help="Check without migrating: exit 0 if current, 2 if pending"),
 ) -> None:
-    from plumbline.persistence.migrations import migrate, status
+    from plumbline.persistence.migrations import HEAD, migrate, status
     try:
         url = Settings().database_url
         if not url:
             raise ValueError("PLUMBLINE_DATABASE_URL must not be empty")
-        if check_only and status(url):
-            raise typer.Exit(code=2)
+        if check_only:
+            current = status(url)
+            console.print(f"Current: {current or 'None'} | Head: {HEAD}")
+            raise typer.Exit(code=0 if current == HEAD else 2)
         console.print(f"Migration current: {migrate(url)}")
     except typer.Exit:
         raise
@@ -217,6 +219,9 @@ def collect_raw(
         console.print(f"Collection incomplete: {result['id']}; maturity assessment blocked.")
         for failure in result["completeness"].get("failures", []):
             console.print(str(failure))
+        raise typer.Exit(code=1)
+    if result.get("assessment_status") == "failed":
+        console.print("Maturity assessment failed.")
         raise typer.Exit(code=1)
     console.print(f"Collection succeeded: {result['id']}")
     for name, path in result.get("outputs", {}).items():

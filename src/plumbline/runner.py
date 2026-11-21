@@ -12,13 +12,13 @@ from pathlib import Path
 import asyncio
 import logging
 import os
+from sqlalchemy.exc import SQLAlchemyError
 
 from plumbline.config.settings import Settings
 from plumbline.config.access import checked_path, validate_org, validate_target
 from plumbline.api.models import CollectionConfig
 from plumbline.backend.api.ado_client import AzureDevOpsClient
 from plumbline.backend.services.factory import MetricsServiceFactory
-from plumbline.backend.services.raw_data_collector import RawDataCollector
 from plumbline.backend.services.raw_maturity_assessment import RawMaturityAssessmentService
 from plumbline.persistence.models import init_engine_and_tables
 from plumbline.persistence.sinks import CompositeSink, FileSink, PostgresSink
@@ -38,7 +38,8 @@ def collection_summary(raw_data: Dict[str, Any]) -> Dict[str, Any]:
     scopes = [metadata] if "complete" in metadata else list(metadata.values())
     failures = [failure for scope in scopes for failure in scope.get("failures", [])]
     return {"complete": all(scope.get("complete", True) for scope in scopes),
-            "failures": failures, "scopes": metadata}
+            "failures": failures, "scopes": metadata,
+            "caveats": [caveat for scope in scopes for caveat in scope.get("caveats", [])]}
 
 
 async def execute_collection_run(
@@ -57,6 +58,8 @@ async def execute_collection_run(
     # Ensure run_id
     if run_id is None:
         run_id = str(uuid4())
+    else:
+        run_id = str(UUID(run_id))
 
     result: RunResult = RunResult(
         id=run_id,
@@ -77,7 +80,7 @@ async def execute_collection_run(
 
     # Every run owns its directory, including when a custom base is selected.
     run_dir = str(UUID(run_id))
-    base = checked_path(config.output_path) if config.output_path else Path("exports/metrics")
+    base = checked_path(config.output_path).resolve() if config.output_path else settings.exports_dir / "metrics"
     output = checked_path(base.parent / run_dir / base.name)
     if attempt_id is not None:
         output = checked_path(output.parent / str(UUID(attempt_id)) / output.name)
@@ -133,12 +136,7 @@ async def execute_collection_run(
                             :id, 'running', :executed_at, :started_at, :org, :project, :repo, :branch, :commit_sha,
                             :run_label, :env, :version, :artifacts_dir
                         )
-                        ON CONFLICT (id) DO UPDATE SET
-                            status='running',
-                            started_at=:started_at,
-                            org=EXCLUDED.org, project=EXCLUDED.project,
-                            repo=EXCLUDED.repo, branch=EXCLUDED.branch, commit_sha=EXCLUDED.commit_sha,
-                            artifacts_dir=EXCLUDED.artifacts_dir
+                        ON CONFLICT (id) DO NOTHING
                         """
                     ),
                     {
@@ -162,44 +160,56 @@ async def execute_collection_run(
     ado_client = None
     provider_snapshot = None
     try:
+        from plumbline.collection.projection import project_snapshot
+        from plumbline.connections.execution import protect_logs, redact
+        from plumbline.providers import ADOProvider, SyntheticProvider
+        from plumbline.providers.contract import Window
+        from plumbline.providers.synthetic import DATA, WINDOW
+        from dataclasses import replace
+
+        exemption_manager = None
+        ef = getattr(settings, "exemptions_file", None)
+        if ef:
+            from plumbline.config.exemptions import ExemptionManager
+            exemption_manager = ExemptionManager(Path(str(ef)), strict=True)
+
         if connection_provider == "synthetic":
-            from plumbline.connections.execution import synthetic_data
-            raw_data_result, provider_snapshot = await synthetic_data(config)
+            provider = SyntheticProvider(config.connection_id or "synthetic")
+            provider_snapshot = await provider.collect(config.projects or ([config.project] if config.project else list(DATA)), WINDOW)
         else:
             ado_client = AzureDevOpsClient(settings)
-            raw_collector = cast(
-                RawDataCollector,
-                MetricsServiceFactory.create_service(
-                    "raw",
-                    ado_client,
-                    minimal=False,
-                    enable_delta=False,
-                    skip_stale_repos=False,
-                    force_year_window=True,
-                ),
-            )
-            if progress_callback is not None:
-                raw_collector.progress_callback = progress_callback
-
-            # Load exemptions if configured
-            exemption_manager = None
-            try:
-                from plumbline.config.exemptions import ExemptionManager  # type: ignore
-                ef = getattr(settings, 'exemptions_file', None)
-                if ef:
-                    cfg_path = Path(str(ef))
-                    if cfg_path.exists():
-                        exemption_manager = ExemptionManager(cfg_path)
-            except Exception as ex:
-                logger.warning(f"Failed to initialize ExemptionManager: {ex}")
-
-            # Collect raw data
-            if config.all_projects:
-                raw_data_result = await raw_collector.collect_all_projects_raw_data()
-            elif config.projects is not None:
-                raw_data_result = await raw_collector.collect_all_projects_raw_data(config.projects)
-            else:
-                raw_data_result = await raw_collector.collect_all_raw_data(config.project)
+            selected = config.projects or ([config.project] if config.project else None)
+            if selected is None:
+                with protect_logs(settings.azure_devops_pat.get_secret_value()):
+                    discovered = await ado_client.get_projects()
+                selected = [p["name"] for p in discovered if p.get("name") and
+                            (not p.get("state") or str(p["state"]).lower() == "wellformed")]
+                if not selected:
+                    raise ValueError("No projects found in Azure DevOps")
+            started = datetime.now(timezone.utc)
+            start = datetime(started.year, 1, 1, tzinfo=timezone.utc)
+            # At the first instant of the year use the preceding calendar year.
+            if start == started:
+                start = start.replace(year=start.year - 1)
+            window = Window(start, started, started)
+            provider = ADOProvider(ado_client, config.connection_id or f"ado:{effective_org}",
+                                   progress_callback=progress_callback)
+            with protect_logs(settings.azure_devops_pat.get_secret_value()):
+                provider_snapshot = await provider.collect(selected, window)
+            completed = datetime.now(timezone.utc)
+            provider_snapshot.collection_started_at = started
+            provider_snapshot.collection_completed_at = completed
+            provider_snapshot.window = replace(window, as_of=completed)
+            for kind in (provider_snapshot.projects, provider_snapshot.repositories, provider_snapshot.builds):
+                for record in kind:
+                    record.fields = {name: replace(ev, fresh_as_of=(ev.observed_at <= completed) if ev.observed_at else None)
+                                     for name, ev in record.fields.items()}
+            secret = settings.azure_devops_pat.get_secret_value()
+            provider_snapshot = redact(provider_snapshot, secret)
+        if not any(isinstance(r.fields.get("project").value, dict) and r.fields["project"].value.get("id") and r.fields["project"].value.get("name")
+                   for r in provider_snapshot.projects if r.fields.get("project")):
+            raise ValueError("No selected projects could be collected")
+        raw_data_result = project_snapshot(provider_snapshot)
         raw_data_dict: Dict[str, Any] = dict(raw_data_result)
         completeness = collection_summary(raw_data_dict)
         result["completeness"] = completeness
@@ -223,7 +233,15 @@ async def execute_collection_run(
                 ),
             )
             maturity_data = maturity_service.assess_raw_data(cast(RawData, raw_data_dict))
-            results_container["maturity_data"] = maturity_data
+            if isinstance(maturity_data, dict) and "Assessment failed" in (maturity_data.get("overall", {}).get("explanation") or []):
+                result["assessment_status"] = "failed"
+                result["assessment_error"] = {"code": "assessment_failed", "message": "Assessment failed"}
+                maturity_data = {}
+            else:
+                maturity_data['completeness'] = completeness
+                maturity_data.setdefault('overall', {}).setdefault('explanation', []).extend(
+                    raw_data_dict.get('completeness', {}).get('caveats', []))
+                results_container["maturity_data"] = maturity_data
 
             # Derive calculated metrics (best-effort)
             try:
@@ -268,20 +286,8 @@ async def execute_collection_run(
             "calculation_version": None,
         }
 
-        if config.write_db and engine:
-            # Build composite sink
-            sinks: List[Any] = []
-            if config.write_files:
-                sinks.append(FileSink())
-            sinks.append(PostgresSink(engine))
-            sink = CompositeSink(sinks)
-        elif config.write_files:
-            sink = FileSink()
-        else:
-            sink = None
-
         written_outputs = {}
-        if sink or persist_result is not None:
+        if (config.write_db and engine) or config.write_files or persist_result is not None:
             payload = {
                 "raw_ado_data": results_container.get("raw_ado_data"),
                 "provider_snapshot": provider_snapshot,
@@ -290,12 +296,37 @@ async def execute_collection_run(
                 "calculated_metrics": results_container.get("calculated_metrics", []),
             }
             if persist_result is None:
-                written_outputs = sink.persist(payload, run_context) or {}
+                if config.write_db:
+                    secret = settings.azure_devops_pat.get_secret_value()
+                    payload = {key: value if key == "file_output_base" else redact(value, secret)
+                               for key, value in payload.items()}
+                if engine and config.write_db:
+                    from sqlalchemy import text
+                    # Check/persist the immutable link before any report writes.
+                    # Join one transaction for run metadata, evidence and terminal
+                    # status, just as the worker does under its ownership fence.
+                    with engine.begin() as conn:
+                        sinks: List[Any] = [PostgresSink(conn)]
+                        if config.write_files:
+                            sinks.append(FileSink())
+                        sink = CompositeSink(sinks)
+                        written_outputs = sink.persist(payload, run_context) or {}
+                        finished_at = datetime.now(timezone.utc)
+                        conn.execute(text("""UPDATE runs SET status='succeeded',
+                            finished_at=:finished_at, artifacts_dir=:artifacts_dir, error=NULL
+                            WHERE id=:id"""), {"id": run_id, "finished_at": finished_at,
+                                               "artifacts_dir": result["artifacts_dir"]})
+                    result["finished_at"] = finished_at
+                    snapshot_id = sink.last_snapshot_id
+                    if snapshot_id is not None:
+                        result["snapshot_id"] = snapshot_id
+                elif config.write_files:
+                    written_outputs = FileSink().persist(payload, run_context) or {}
 
         # Success
         result.update(
             status="succeeded",
-            finished_at=datetime.now(timezone.utc),
+            finished_at=result["finished_at"] or datetime.now(timezone.utc),
             artifacts_dir=str(output.parent) if config.write_files else None,
             outputs=written_outputs,
         )
@@ -303,39 +334,25 @@ async def execute_collection_run(
         if persist_result is not None:
             persist_result(payload, run_context, result)
 
-        # Update DB
-        if engine and config.write_db:
-            from sqlalchemy import text
-            with engine.begin() as conn:
-                conn.execute(
-                    text(
-                        """
-                        UPDATE runs
-                        SET status='succeeded', finished_at=:finished_at, artifacts_dir=:artifacts_dir
-                        WHERE id=:id
-                        """
-                    ),
-                    {
-                        "id": result["id"],
-                        "finished_at": result["finished_at"],
-                        "artifacts_dir": result["artifacts_dir"],
-                    },
-                )
-
         return result
     except asyncio.CancelledError:
         if engine and config.write_db:
             try:
                 from sqlalchemy import text
                 with engine.begin() as conn:
-                    conn.execute(text("UPDATE runs SET status='cancelled', finished_at=:finished_at WHERE id=:id"),
+                    conn.execute(text("""UPDATE runs SET status='cancelled', finished_at=:finished_at
+                        WHERE id=:id AND NOT EXISTS (SELECT 1 FROM run_evidence WHERE run_id=:id)"""),
                                  {"id": run_id, "finished_at": datetime.now(timezone.utc)})
             except Exception:
                 logger.exception("Failed to record cancellation for run %s", run_id)
         raise
     except Exception as e:  # noqa: BLE001
-        error = "Connection collection failed" if config.connection_id else str(e)
-        logger.error("Run %s failed: %s", run_id, error, exc_info=not bool(config.connection_id))
+        from plumbline.connections.execution import redact
+        if isinstance(e, SQLAlchemyError):
+            error = "Database operation failed"
+        else:
+            error = "Invalid exemptions configuration" if str(e) == "Unable to load configured exemptions" else ("Connection collection failed" if config.connection_id else redact(str(e), settings.azure_devops_pat.get_secret_value()))
+        logger.error("Run %s failed: %s", run_id, error)
         result.update(status="failed", error=error, finished_at=datetime.now(timezone.utc))
         if engine and config.write_db:
             try:
@@ -346,7 +363,7 @@ async def execute_collection_run(
                             """
                             UPDATE runs
                             SET status='failed', finished_at=:finished_at, error=:error
-                            WHERE id=:id
+                            WHERE id=:id AND NOT EXISTS (SELECT 1 FROM run_evidence WHERE run_id=:id)
                             """
                         ),
                         {"id": run_id, "finished_at": result["finished_at"], "error": result["error"]},
@@ -362,4 +379,5 @@ async def execute_collection_run(
         except asyncio.TimeoutError:
             logger.warning("ADO client close() timed out after 30s")
         except Exception as e:
-            logger.error(f"Error closing ADO client: {e}")
+            from plumbline.connections.execution import redact
+            logger.error("Error closing ADO client: %s", redact(str(e), settings.azure_devops_pat.get_secret_value()))

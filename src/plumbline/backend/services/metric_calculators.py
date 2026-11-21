@@ -344,8 +344,10 @@ class CoverageMetrics:
                     for module in coverage_data:
                         for mod in module.get("modules", []):
                             stats = mod.get("statistics", {})
-                            covered = stats.get("linesCovered", 0)
-                            total = covered + stats.get("linesNotCovered", 0)
+                            if "linesCovered" not in stats or "linesNotCovered" not in stats:
+                                continue
+                            covered = stats["linesCovered"]
+                            total = covered + stats["linesNotCovered"]
                             if total > 0:
                                 coverage_values.append(((covered / total) * 100, finish_time))
                 except (ValueError, TypeError, AttributeError):

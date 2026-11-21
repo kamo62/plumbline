@@ -41,8 +41,9 @@ python -m playwright install chromium
 python scripts/phase0_ui_smoke.py
 ```
 
-All application requests in that smoke are intercepted. The baseline screenshots
-use the repository HEAD assets with external font requests blocked.
+All application requests in that smoke are intercepted. Pass
+`--screenshots /path/to/output` to save screenshots of the current interim UI.
+The historical baseline images are available under `docs/screenshots/phase0/`.
 
 For UI changes, exercise the changed journey with synthetic data and include
 screenshots at 1440×900, 1366×768 and 1280×800. Check light, dark and high-contrast

@@ -56,3 +56,46 @@ def test_cli_selected_projects_share_one_run_and_expose_partial_outcome(monkeypa
     assert result.exit_code == 1
     assert len(captured) == 1 and captured[0].projects == ["First", "Second"]
     assert "Collection incomplete" in result.output and "unavailable" in result.output
+
+
+def test_cli_maturity_failure_returns_nonzero(monkeypatch):
+    from plumbline import cli
+    async def execute(config, settings):
+        return {'id': 'synthetic', 'status': 'succeeded', 'completeness': {'complete': True},
+                'assessment_status': 'failed', 'assessment_error': {'code': 'assessment_failed'}}
+    monkeypatch.setenv('PLUMBLINE_AZURE_DEVOPS_PAT', 'test-pat')
+    monkeypatch.setenv('PLUMBLINE_AZURE_DEVOPS_ORG', 'test-org')
+    monkeypatch.setattr(cli, 'execute_collection_run', execute)
+    result = runner.invoke(app, ['collect-raw', '--project', 'test-project', '--maturity', '--no-write-files'])
+    assert result.exit_code == 1 and 'assessment failed' in result.output
+
+
+def test_migration_check_never_migrates_or_creates_a_database(tmp_path, monkeypatch):
+    from sqlalchemy import text
+    from plumbline.persistence.migrations import HEAD, migrate, status
+    from plumbline.persistence.models import init_engine_and_tables
+
+    path = tmp_path / 'check.db'
+    url = f'sqlite:///{path}'
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv('PLUMBLINE_DATABASE_URL', url)
+    assert runner.invoke(app, ['migrate', '--check']).exit_code == 2
+    assert not path.exists()
+
+    migrate(url)
+    before = path.read_bytes()
+    assert runner.invoke(app, ['migrate', '--check']).exit_code == 0
+    assert path.read_bytes() == before and status(url) == HEAD
+
+    engine = init_engine_and_tables(url)
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE alembic_version SET version_num='plumbline_0005'"))
+    before = path.read_bytes()
+    assert runner.invoke(app, ['db-migrate', '--check']).exit_code == 2
+    assert path.read_bytes() == before and status(url) == 'plumbline_0005'
+
+    with engine.begin() as conn:
+        conn.execute(text("UPDATE alembic_version SET version_num='unknown_revision'"))
+    before = path.read_bytes()
+    assert runner.invoke(app, ['migrate', '--check']).exit_code == 1
+    assert path.read_bytes() == before

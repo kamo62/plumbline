@@ -15,10 +15,10 @@ def client(tmp_path, monkeypatch):
     from plumbline.auth.service import bootstrap
     exports = tmp_path / "exports"
     exports.mkdir()
-    monkeypatch.setattr(api, "EXPORTS_DIR", exports.resolve())
     url = f"sqlite:///{tmp_path / 'test.db'}"
     migrate(url)
     settings = Settings(azure_devops_pat="test-pat", azure_devops_org="test-org", database_url=url,
+                        exports_dir=exports,
                         exemptions_file=tmp_path / "exemptions.yaml")
     with session_for(url) as db:
         user = bootstrap(db, "admin", "initial-password-123")
@@ -74,6 +74,10 @@ def test_exemption_meta_upsert_dates_and_nested_rules(client):
     assert list(yaml.safe_load(path.read_text())['exemptions']) == ['Demo']
     assert http.put('/v1/exemptions/demo', headers=headers, json={'effective_date': 'not-a-date'}).status_code == 422
     assert http.get('/v1/exemptions/demo').json()['rule'] == rule
+    original = path.read_bytes()
+    for body in ({'expiration_date': '2020-01-01'}, {'repositories': [{'name': 'repo', 'unknown': 1}]}):
+        assert http.put('/v1/exemptions/demo', json=body).status_code == 422
+        assert path.read_bytes() == original
 
 
 def test_removed_routes(client):
@@ -148,3 +152,97 @@ def test_missing_saved_connection_returns_actionable_error(client):
     response = http.post('/v1/runs', json={'connection_id': 'missing', 'project': 'Alpha'})
     assert response.status_code == 422
     assert response.json()['detail'] == 'Connection not found'
+
+
+def test_worker_attempt_reports_are_downloadable_and_isolated(client):
+    import io
+    import zipfile
+
+    http, exports, settings = client
+    run, attempt, previous = uuid4(), uuid4(), uuid4()
+    directory = exports / str(run) / str(attempt)
+    directory.mkdir(parents=True)
+    (directory / 'report.json').write_text('{"sample": true}')
+    sibling = directory.parent / str(previous)
+    sibling.mkdir()
+    (sibling / 'stale.json').write_text('{}')
+    add_run(settings, run, directory)
+    listing = http.get(f'/v1/runs/{run}/artifacts')
+    assert listing.status_code == 200, listing.text
+    files = listing.json()['files']
+    assert len(files) == 1
+    assert http.get(files[0]['url']).json() == {'sample': True}
+    response = http.get(f'/v1/runs/{run}/artifacts.zip')
+    assert response.status_code == 200
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        assert archive.namelist() == ['report.json']
+        assert archive.read('report.json') == b'{"sample": true}'
+
+
+@pytest.mark.parametrize('layout', ['foreign', 'nested', 'symlink', 'non_uuid', 'owner_symlink', 'traversal', 'uppercase'])
+def test_recorded_artifact_directory_requires_exact_ownership(client, layout):
+    http, exports, settings = client
+    run = uuid4()
+    owner = exports / str(run)
+    owner.mkdir()
+    foreign = exports / str(uuid4())
+    foreign.mkdir()
+    if layout == 'foreign':
+        directory = foreign
+    elif layout == 'nested':
+        directory = owner / str(uuid4()) / str(uuid4())
+        directory.mkdir(parents=True)
+    elif layout == 'non_uuid':
+        directory = owner / 'unowned'
+        directory.mkdir()
+    elif layout == 'traversal':
+        attempt = str(uuid4())
+        (owner / attempt).mkdir()
+        directory = owner / attempt / '..' / attempt
+    elif layout == 'uppercase':
+        directory = owner / str(uuid4()).upper()
+        directory.mkdir()
+    elif layout == 'owner_symlink':
+        owner.rmdir()
+        owner.symlink_to(foreign, target_is_directory=True)
+        directory = owner
+    else:
+        directory = owner / str(uuid4())
+        directory.symlink_to(foreign, target_is_directory=True)
+    add_run(settings, run, directory)
+    for suffix in ('artifacts', 'artifacts.zip'):
+        assert http.get(f'/v1/runs/{run}/{suffix}').status_code == 403
+
+
+def test_api_rejects_custom_output_destination_before_enqueue(client, monkeypatch):
+    http, _, _ = client
+    monkeypatch.setattr(api.queue, 'enqueue', lambda *args: pytest.fail('invalid request enqueued'))
+    response = http.post('/v1/runs', json={'project': 'one', 'output_path': '/tmp/arbitrary/report'})
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize('field,value', [
+    ('connection_provider', 'synthetic'), ('connection_provider', None),
+    ('db_strict', True), ('db_strict', False), ('db_strict', None),
+])
+def test_api_rejects_internal_controls_before_enqueue(client, monkeypatch, field, value):
+    http, _, _ = client
+    monkeypatch.setattr(api.queue, 'enqueue', lambda *args: pytest.fail('invalid request enqueued'))
+    assert http.post('/v1/runs', json={'project': 'one', field: value}).status_code == 422
+
+
+def test_internal_collection_config_still_accepts_internal_controls():
+    from plumbline.api.models import CollectionConfig
+    config = CollectionConfig(project='one', connection_provider='synthetic', db_strict=True,
+                              output_path='custom/metrics')
+    assert config.connection_provider == 'synthetic'
+    assert config.db_strict is True
+    assert config.output_path == 'custom/metrics'
+
+
+def test_openapi_excludes_internal_collection_controls():
+    schema = api.app.openapi()['components']['schemas']['RunRequest']
+    assert 'connection_provider' not in schema['properties']
+    assert 'db_strict' not in schema['properties']
+    assert schema['properties']['output_path']['type'] == 'null'
+    assert schema['additionalProperties'] is False

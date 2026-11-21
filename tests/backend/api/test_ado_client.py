@@ -412,7 +412,7 @@ async def test_get_code_coverage_error(azure_client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_get_test_results_success(azure_client, monkeypatch):
-    monkeypatch.setattr(azure_client, "get_paginated_results", AsyncMock(return_value=[{"build": {"id": 1}, "totalTests": 5, "passedTests": 4, "failedTests": 1, "notApplicableTests": 0, "incompleteTests": 0}]))
+    monkeypatch.setattr(azure_client, "get_paginated_results", AsyncMock(return_value=[{"build": {"id": 1}, "totalTests": 5, "passedTests": 4, "unanalyzedTests": 1, "notApplicableTests": 0, "incompleteTests": 0}]))
     async def mock_get_session():
         return MagicMock()
     monkeypatch.setattr(azure_client, "_get_aiohttp_session", mock_get_session)
@@ -428,7 +428,7 @@ async def test_get_test_results_empty(azure_client, monkeypatch):
         return MagicMock()
     monkeypatch.setattr(azure_client, "_get_aiohttp_session", mock_get_session)
     result = await azure_client.get_test_results("proj1", 1)
-    assert result["results"][0]["total"] == 0
+    assert result == {"results": [], "unlinked_runs": 0}
 
 @pytest.mark.asyncio
 async def test_get_test_results_error(azure_client, monkeypatch):

@@ -361,6 +361,31 @@
         }
       }
     },
+    "/connections/providers": {
+      "get": {
+        "tags": [
+          "connections"
+        ],
+        "summary": "Providers",
+        "operationId": "providers_connections_providers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderMetadata"
+                  },
+                  "type": "array",
+                  "title": "Response Providers Connections Providers Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/connections": {
       "get": {
         "tags": [
@@ -477,6 +502,249 @@
         }
       }
     },
+    "/v1/runs/{run_id}/measurements/test-pass-rate": {
+      "post": {
+        "tags": [
+          "measurements"
+        ],
+        "summary": "Create Measurement",
+        "operationId": "create_measurement_v1_runs__run_id__measurements_test_pass_rate_post",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestPassRateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/runs/{run_id}/measurements": {
+      "get": {
+        "tags": [
+          "measurements"
+        ],
+        "summary": "List Measurements",
+        "operationId": "list_measurements_v1_runs__run_id__measurements_get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/measurements/{measurement_id}": {
+      "get": {
+        "tags": [
+          "measurements"
+        ],
+        "summary": "Get Measurement",
+        "operationId": "get_measurement_v1_measurements__measurement_id__get",
+        "parameters": [
+          {
+            "name": "measurement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Measurement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/measurements/{measurement_id}/export.json": {
+      "get": {
+        "tags": [
+          "measurements"
+        ],
+        "summary": "Export Measurement",
+        "operationId": "export_measurement_v1_measurements__measurement_id__export_json_get",
+        "parameters": [
+          {
+            "name": "measurement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Measurement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/measurements/{measurement_id}/verification": {
+      "get": {
+        "tags": [
+          "measurements"
+        ],
+        "summary": "Verify Measurement",
+        "operationId": "verify_measurement_v1_measurements__measurement_id__verification_get",
+        "parameters": [
+          {
+            "name": "measurement_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 64,
+              "maxLength": 64,
+              "pattern": "^[0-9a-f]{64}$",
+              "title": "Measurement Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/demo/providers": {
+      "get": {
+        "tags": [
+          "demo"
+        ],
+        "summary": "Get Demo Providers",
+        "description": "Show the baseline evidence published in the four fictional SCM packs.",
+        "operationId": "get_demo_providers_v1_demo_providers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoProviders"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/": {
       "get": {
         "summary": "Root",
@@ -518,7 +786,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CollectionConfig"
+                "$ref": "#/components/schemas/RunRequest"
               }
             }
           }
@@ -1088,142 +1356,144 @@
   },
   "components": {
     "schemas": {
-      "CollectionConfig": {
+      "DemoProvider": {
         "properties": {
-          "org": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Org",
-            "description": "Organization identifier (overrides PLUMBLINE_AZURE_DEVOPS_ORG)"
+          "id": {
+            "type": "string",
+            "title": "Id"
           },
-          "project": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Project",
-            "description": "Single project to collect from"
+          "label": {
+            "type": "string",
+            "title": "Label"
           },
-          "projects": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Projects",
-            "description": "Selected projects to collect together"
+          "api_version": {
+            "type": "string",
+            "title": "Api Version"
           },
-          "all_projects": {
-            "type": "boolean",
-            "title": "All Projects",
-            "description": "Collect from all available projects",
-            "default": false
+          "window": {
+            "$ref": "#/components/schemas/DemoWindow"
           },
-          "write_files": {
-            "type": "boolean",
-            "title": "Write Files",
-            "description": "Write outputs to local files",
-            "default": true
+          "repositories": {
+            "items": {
+              "$ref": "#/components/schemas/DemoRepository"
+            },
+            "type": "array",
+            "title": "Repositories"
           },
-          "write_db": {
-            "type": "boolean",
-            "title": "Write Db",
-            "description": "Write outputs to database",
-            "default": true
+          "responses": {
+            "items": {
+              "$ref": "#/components/schemas/DemoResponse"
+            },
+            "type": "array",
+            "title": "Responses"
           },
-          "output_path": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Output Path",
-            "description": "Custom output path (default: exports/{run_id}/metrics)"
+          "facts": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "type": "object",
+            "title": "Facts"
           },
-          "include_maturity": {
-            "type": "boolean",
-            "title": "Include Maturity",
-            "description": "Include maturity assessment",
-            "default": true
-          },
-          "run_label": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Run Label",
-            "description": "Human-friendly label for this run"
-          },
-          "repo": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Repo",
-            "description": "Repository name (for metadata)"
-          },
-          "branch": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Branch",
-            "description": "Branch name (for metadata)"
-          },
-          "commit_sha": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Commit Sha",
-            "description": "Commit SHA (for metadata)"
-          },
-          "db_strict": {
-            "type": "boolean",
-            "title": "Db Strict",
-            "description": "Fail-fast if DB requested but unavailable",
-            "default": false
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
           }
         },
-        "additionalProperties": false,
         "type": "object",
-        "title": "CollectionConfig",
-        "description": "API request model for triggering metrics collection.\n\nMirrors CLI collect_raw options."
+        "required": [
+          "id",
+          "label",
+          "api_version",
+          "window",
+          "repositories",
+          "responses",
+          "facts",
+          "limitations"
+        ],
+        "title": "DemoProvider"
+      },
+      "DemoProviders": {
+        "properties": {
+          "providers": {
+            "items": {
+              "$ref": "#/components/schemas/DemoProvider"
+            },
+            "type": "array",
+            "title": "Providers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "providers"
+        ],
+        "title": "DemoProviders"
+      },
+      "DemoRepository": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "DemoRepository"
+      },
+      "DemoResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "source",
+          "status"
+        ],
+        "title": "DemoResponse"
+      },
+      "DemoWindow": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "title": "Start"
+          },
+          "end_exclusive": {
+            "type": "string",
+            "title": "End Exclusive"
+          },
+          "observed_at": {
+            "type": "string",
+            "title": "Observed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start",
+          "end_exclusive",
+          "observed_at"
+        ],
+        "title": "DemoWindow"
       },
       "HTTPValidationError": {
         "properties": {
@@ -1238,6 +1508,7 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "JsonValue": {},
       "Login": {
         "properties": {
           "username": {
@@ -1313,6 +1584,240 @@
           "new_password"
         ],
         "title": "Password"
+      },
+      "ProviderMetadata": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "implemented_live_unverified",
+              "diagnostic_only"
+            ],
+            "title": "Status",
+            "description": "diagnostic_only identifies synthetic development evidence, including queued collections; it does not disable runs"
+          },
+          "capabilities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Capabilities",
+            "description": "Implemented evidence families; not a guarantee of complete or live-verified evidence"
+          },
+          "requirements": {
+            "$ref": "#/components/schemas/ProviderRequirements"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "status",
+          "capabilities",
+          "requirements"
+        ],
+        "title": "ProviderMetadata"
+      },
+      "ProviderRequirements": {
+        "properties": {
+          "organisation": {
+            "type": "string",
+            "enum": [
+              "required",
+              "not_supported"
+            ],
+            "title": "Organisation"
+          },
+          "projects": {
+            "type": "string",
+            "enum": [
+              "required",
+              "optional"
+            ],
+            "title": "Projects"
+          },
+          "credential": {
+            "type": "string",
+            "enum": [
+              "required_for_execution",
+              "not_supported"
+            ],
+            "title": "Credential"
+          }
+        },
+        "type": "object",
+        "required": [
+          "organisation",
+          "projects",
+          "credential"
+        ],
+        "title": "ProviderRequirements"
+      },
+      "RunRequest": {
+        "properties": {
+          "connection_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connection Id",
+            "description": "Saved connection identifier"
+          },
+          "org": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Org",
+            "description": "Organization identifier (overrides PLUMBLINE_AZURE_DEVOPS_ORG)"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project",
+            "description": "Single project to collect from"
+          },
+          "projects": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projects",
+            "description": "Selected projects to collect together"
+          },
+          "all_projects": {
+            "type": "boolean",
+            "title": "All Projects",
+            "description": "Collect from all available projects",
+            "default": false
+          },
+          "write_files": {
+            "type": "boolean",
+            "title": "Write Files",
+            "description": "Write outputs to local files",
+            "default": true
+          },
+          "write_db": {
+            "type": "boolean",
+            "title": "Write Db",
+            "description": "Write outputs to database",
+            "default": true
+          },
+          "output_path": {
+            "type": "null",
+            "title": "Output Path",
+            "description": "API runs use server-owned output storage"
+          },
+          "include_maturity": {
+            "type": "boolean",
+            "title": "Include Maturity",
+            "description": "Include maturity assessment",
+            "default": true
+          },
+          "run_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Label",
+            "description": "Human-friendly label for this run"
+          },
+          "repo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repo",
+            "description": "Repository name (for metadata)"
+          },
+          "branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch",
+            "description": "Branch name (for metadata)"
+          },
+          "commit_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commit Sha",
+            "description": "Commit SHA (for metadata)"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "RunRequest",
+        "description": "Remote callers use server-owned output storage; CLI keeps custom paths."
+      },
+      "TestPassRateRequest": {
+        "properties": {
+          "minimum_sample": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Minimum Sample"
+          },
+          "population_policy": {
+            "type": "string",
+            "const": "ado-reported-total/v1",
+            "title": "Population Policy"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "minimum_sample",
+          "population_policy"
+        ],
+        "title": "TestPassRateRequest"
       },
       "TokenRequest": {
         "properties": {

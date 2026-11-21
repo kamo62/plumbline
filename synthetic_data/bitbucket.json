@@ -1,0 +1,101 @@
+{
+  "dataset": "synthetic_bitbucket_cloud",
+  "provider": "bitbucket",
+  "api_version": "2.0",
+  "documentation_date": "2026-11-17",
+  "provenance": "synthetic_from_public_documentation_not_live_capture",
+  "profile": "synthetic_selected_documented_fields_not_full_schema",
+  "window": {"start": "2026-01-01T00:00:00Z", "end_exclusive": "2026-02-01T00:00:00Z", "observed_at": "2026-02-02T00:00:00Z"},
+  "sources": {
+    "repositories": "https://developer.atlassian.com/cloud/bitbucket/rest/api-group-repositories/",
+    "pull_requests": "https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pullrequests/",
+    "pipelines": "https://developer.atlassian.com/cloud/bitbucket/rest/api-group-pipelines/",
+    "test_summary_fields": "https://support.atlassian.com/bitbucket-cloud/kb/convert-bitbucket-pipeline-test-reports-into-pull-requests-code-insight-reports/",
+    "reports": "https://developer.atlassian.com/cloud/bitbucket/rest/api-group-reports/",
+    "branch_restrictions": "https://developer.atlassian.com/cloud/bitbucket/rest/api-group-branch-restrictions/",
+    "openapi": "https://dac-static.atlassian.com/cloud/bitbucket/swagger.v3.json?_v=2.300.205"
+  },
+  "responses": [
+    {
+      "name": "synthetic_repositories_page_1", "source": "repositories", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace?pagelen=1&page=1",
+      "status": 200, "headers": {},
+      "body": {"page": 1, "pagelen": 1, "size": 2, "next": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace?pagelen=1&page=2", "values": [{"type": "repository", "uuid": "{22222222-2222-4222-8222-222222222222}", "name": "synthetic_atlas", "slug": "synthetic_atlas", "full_name": "synthetic-workspace/synthetic_atlas", "description": "synthetic_private_repository", "scm": "git", "is_private": true, "workspace": {"type": "workspace", "uuid": "{11111111-1111-4111-8111-111111111111}", "slug": "synthetic-workspace", "name": "synthetic_workspace"}, "mainbranch": {"type": "branch", "name": "synthetic_main"}, "links": {"self": {"href": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace/synthetic_atlas"}, "html": {"href": "https://bitbucket.org/synthetic-workspace/synthetic_atlas"}}}]}
+    },
+    {
+      "name": "synthetic_repositories_page_2", "source": "repositories", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace?pagelen=1&page=2",
+      "status": 200, "headers": {},
+      "body": {"page": 2, "pagelen": 1, "size": 2, "previous": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace?pagelen=1&page=1", "values": [{"type": "repository", "uuid": "{44444444-4444-4444-8444-444444444444}", "name": "synthetic_empty", "slug": "synthetic_empty", "full_name": "synthetic-workspace/synthetic_empty", "description": "synthetic_empty_repository", "scm": "git", "is_private": true, "workspace": {"type": "workspace", "uuid": "{11111111-1111-4111-8111-111111111111}", "slug": "synthetic-workspace", "name": "synthetic_workspace"}, "mainbranch": null}]}
+    },
+    {
+      "name": "synthetic_merged_pull_request", "source": "pull_requests", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace/synthetic_atlas/pullrequests/11",
+      "status": 200, "headers": {},
+      "body": {
+        "type": "pullrequest", "id": 11, "title": "synthetic_api_change", "description": "synthetic_change_opened_before_window", "state": "MERGED", "created_on": "2025-12-01T09:00:00Z", "updated_on": "2026-02-01T12:00:00Z",
+        "author": {"type": "user", "uuid": "{55555555-5555-4555-8555-555555555555}", "display_name": "synthetic_author", "nickname": "synthetic_author"},
+        "source": {"branch": {"name": "synthetic_feature"}, "commit": {"hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}, "repository": {"uuid": "{22222222-2222-4222-8222-222222222222}", "full_name": "synthetic-workspace/synthetic_atlas"}},
+        "destination": {"branch": {"name": "synthetic_main"}, "commit": {"hash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}, "repository": {"uuid": "{22222222-2222-4222-8222-222222222222}", "full_name": "synthetic-workspace/synthetic_atlas"}},
+        "merge_commit": {"hash": "cccccccccccccccccccccccccccccccccccccccc"},
+        "participants": [
+          {"type": "participant", "user": {"type": "user", "uuid": "{66666666-6666-4666-8666-666666666666}", "display_name": "synthetic_reviewer", "nickname": "synthetic_reviewer"}, "role": "REVIEWER", "approved": true, "state": "approved", "participated_on": "2026-01-09T09:00:00Z"},
+          {"type": "participant", "user": {"type": "user", "uuid": "{eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee}", "display_name": "synthetic_commenter", "nickname": "synthetic_commenter"}, "role": "PARTICIPANT", "approved": false, "state": null, "participated_on": "2026-02-01T12:00:00Z"}
+        ],
+        "comment_count": 1, "task_count": 0
+      }
+    },
+    {
+      "name": "synthetic_pull_request_activity", "source": "pull_requests", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace/synthetic_atlas/pullrequests/11/activity?pagelen=100&page=1",
+      "status": 200, "headers": {},
+      "body": {"page": 1, "pagelen": 100, "values": [
+        {"update": {"state": "MERGED", "date": "2026-01-10T10:00:00Z", "author": {"type": "user", "uuid": "{55555555-5555-4555-8555-555555555555}", "display_name": "synthetic_author"}}, "pull_request": {"type": "pullrequest", "id": 11, "title": "synthetic_api_change"}},
+        {"approval": {"date": "2026-01-09T09:00:00Z", "user": {"type": "user", "uuid": "{66666666-6666-4666-8666-666666666666}", "display_name": "synthetic_reviewer"}}, "pull_request": {"type": "pullrequest", "id": 11, "title": "synthetic_api_change"}}
+      ]}
+    },
+    {
+      "name": "synthetic_pipelines", "source": "pipelines", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace/synthetic_atlas/pipelines?pagelen=100&page=1",
+      "status": 200, "headers": {},
+      "body": {"page": 1, "pagelen": 100, "size": 2, "values": [
+        {"type": "pipeline", "uuid": "{88888888-8888-4888-8888-888888888888}", "build_number": 8, "repository": {"type": "repository", "uuid": "{22222222-2222-4222-8222-222222222222}", "full_name": "synthetic-workspace/synthetic_atlas"}, "created_on": "2026-01-31T23:59:00Z", "state": {"type": "pipeline_state_in_progress", "name": "IN_PROGRESS", "stage": {"type": "pipeline_state_in_progress_running", "name": "RUNNING"}}, "target": {"type": "pipeline_ref_target", "ref_type": "branch", "ref_name": "synthetic_main", "commit": {"type": "commit", "hash": "dddddddddddddddddddddddddddddddddddddddd"}}},
+        {"type": "pipeline", "uuid": "{77777777-7777-4777-8777-777777777777}", "build_number": 7, "repository": {"type": "repository", "uuid": "{22222222-2222-4222-8222-222222222222}", "full_name": "synthetic-workspace/synthetic_atlas"}, "created_on": "2025-12-31T23:59:00Z", "completed_on": "2026-01-01T00:05:00Z", "state": {"type": "pipeline_state_completed", "name": "COMPLETED", "result": {"type": "pipeline_state_completed_successful", "name": "SUCCESSFUL"}}, "target": {"type": "pipeline_ref_target", "ref_type": "branch", "ref_name": "synthetic_main", "commit": {"type": "commit", "hash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}}}
+      ]}
+    },
+    {
+      "name": "synthetic_pipeline_steps", "source": "pipelines", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace/synthetic_atlas/pipelines/%7B77777777-7777-4777-8777-777777777777%7D/steps?pagelen=100&page=1",
+      "status": 200, "headers": {},
+      "body": {"page": 1, "pagelen": 100, "size": 1, "values": [{"type": "pipeline_step", "uuid": "{99999999-9999-4999-8999-999999999999}", "name": "synthetic_unit_tests", "started_on": "2026-01-01T00:00:00Z", "completed_on": "2026-01-01T00:05:00Z", "duration_in_seconds": 300, "state": {"type": "pipeline_step_state_completed", "name": "COMPLETED", "result": {"type": "pipeline_step_state_completed_successful", "name": "SUCCESSFUL"}}}]}
+    },
+    {
+      "name": "synthetic_step_test_report", "source": "test_summary_fields", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace/synthetic_atlas/pipelines/%7B77777777-7777-4777-8777-777777777777%7D/steps/%7B99999999-9999-4999-8999-999999999999%7D/test_reports",
+      "status": 200, "headers": {},
+      "body": {"number_of_test_cases": 20, "number_of_failed_test_cases": 2, "number_of_successful_test_cases": 18}
+    },
+    {
+      "name": "synthetic_commit_reports", "source": "reports", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace/synthetic_atlas/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/reports?pagelen=100&page=1",
+      "status": 200, "headers": {},
+      "body": {"page": 1, "pagelen": 100, "size": 1, "values": [{"type": "report", "uuid": "{abcdefab-cdef-4abc-8def-abcdefabcdef}", "external_id": "synthetic_coverage_report", "title": "synthetic_line_coverage", "details": "synthetic_producer_percentage_without_line_population", "reporter": "synthetic_coverage_tool", "report_type": "COVERAGE", "result": "PASSED", "created_on": "2026-01-01T00:05:00Z", "updated_on": "2026-01-01T00:05:00Z", "data": [{"title": "synthetic_line_coverage", "type": "PERCENTAGE", "value": 80}]}]}
+    },
+    {
+      "name": "synthetic_branch_restrictions", "source": "branch_restrictions", "method": "GET",
+      "url": "https://api.bitbucket.org/2.0/repositories/synthetic-workspace/synthetic_atlas/branch-restrictions?pagelen=100&page=1",
+      "status": 200, "headers": {},
+      "body": {"page": 1, "pagelen": 100, "size": 1, "values": [{"type": "branchrestriction", "id": 900601, "kind": "require_approvals_to_merge", "branch_match_kind": "glob", "pattern": "synthetic_main", "value": 1, "users": [], "groups": []}]}
+    }
+  ],
+  "edge_cases": [
+    {"name": "synthetic_zero_tests", "response_to": "synthetic_step_test_report", "classification": "synthetic_documented_shape", "status": 200, "headers": {}, "body": {"number_of_test_cases": 0, "number_of_failed_test_cases": 0, "number_of_successful_test_cases": 0}, "expected_interpretation": "synthetic_zero_population_not_zero_percent"},
+    {"name": "synthetic_missing_success_count", "response_to": "synthetic_step_test_report", "classification": "synthetic_deliberately_incomplete", "status": 200, "headers": {}, "body": {"number_of_test_cases": 20, "number_of_failed_test_cases": 2}, "expected_interpretation": "synthetic_do_not_infer_missing_pass_count"},
+    {"name": "synthetic_missing_test_report", "response_to": "synthetic_step_test_report", "classification": "synthetic_http_failure", "status": 404, "headers": {}, "body": {"type": "error", "error": {"message": "synthetic_report_not_found"}}, "expected_interpretation": "synthetic_missing_or_inaccessible_report_not_zero_tests"},
+    {"name": "synthetic_restrictions_denied", "response_to": "synthetic_branch_restrictions", "classification": "synthetic_http_failure", "status": 403, "headers": {}, "body": {"type": "error", "error": {"message": "synthetic_permission_denied"}}, "expected_interpretation": "synthetic_unknown_controls_not_unprotected"},
+    {"name": "synthetic_rate_limited", "response_to": "synthetic_pipelines", "classification": "synthetic_http_failure", "status": 429, "headers": {"Retry-After": "0"}, "body": {"type": "error", "error": {"message": "synthetic_rate_limited"}}, "expected_interpretation": "synthetic_retry_policy_test_no_live_wait_required"},
+    {"name": "synthetic_inventory_without_total", "response_to": "synthetic_repositories_page_2", "classification": "synthetic_documented_shape", "status": 200, "headers": {}, "body": {"pagelen": 1, "values": [{"type": "repository", "uuid": "{44444444-4444-4444-8444-444444444444}", "name": "synthetic_empty", "slug": "synthetic_empty", "full_name": "synthetic-workspace/synthetic_empty", "is_private": true, "mainbranch": null}]}, "expected_interpretation": "synthetic_optional_size_absence_is_not_itself_collection_failure"}
+  ],
+  "expected_facts": {"repository_uuids_across_pages": ["{22222222-2222-4222-8222-222222222222}", "{44444444-4444-4444-8444-444444444444}"], "passed_tests": 18, "reported_tests": 20, "reported_pass_percent": 90, "reported_line_coverage_percent": 80, "coverage_line_denominator": null, "historical_revision_valid_review_coverage": null, "merge_event_time": "2026-01-10T10:00:00Z", "merge_time_from_updated_on": null, "enforced_merge_checks": null},
+  "limitations": ["synthetic_counts_are_step_scoped_not_pipeline_wide", "synthetic_updated_on_and_participated_on_are_not_merge_timestamps", "synthetic_current_participant_state_is_not_complete_revision_history", "synthetic_configured_merge_check_does_not_prove_enforcement", "synthetic_commit_coverage_is_a_producer_assertion_without_line_denominator", "synthetic_selected_fields_not_complete_schema"]
+}

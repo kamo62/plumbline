@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic.json_schema import SkipJsonSchema
 from plumbline.config.access import checked_path, validate_org, validate_target
 
 
@@ -37,6 +38,15 @@ class CollectionConfig(BaseModel):
 
     # Advanced options
     db_strict: bool = Field(False, description="Fail-fast if DB requested but unavailable")
+
+    @field_validator("connection_provider")
+    @classmethod
+    def validate_connection_provider(cls, value):
+        if value is not None:
+            from plumbline.providers.registry import get_provider
+            get_provider(value)
+        return value
+
     @model_validator(mode="after")
     def validate_config(self):  # type: ignore[override]
         if self.org:
@@ -60,3 +70,18 @@ class CollectionConfig(BaseModel):
             raise ValueError("Specify exactly one of 'project', 'projects', or 'all_projects'")
 
         return self
+
+
+class RunRequest(CollectionConfig):
+    """Remote callers use server-owned output storage; CLI keeps custom paths."""
+
+    output_path: None = Field(None, description="API runs use server-owned output storage")
+    connection_provider: SkipJsonSchema[str | None] = Field(None, exclude=True)
+    db_strict: SkipJsonSchema[bool] = Field(False, exclude=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_internal_controls(cls, value):
+        if isinstance(value, dict) and {"connection_provider", "db_strict"} & value.keys():
+            raise ValueError("Internal collection controls cannot be supplied")
+        return value

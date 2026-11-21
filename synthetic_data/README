@@ -1,0 +1,200 @@
+# Synthetic provider API data
+
+Prepared: 17 November 2026.
+
+These are entirely fictional, documentation-based API response examples for
+Azure DevOps, GitHub, GitLab and Bitbucket Cloud. They contain no account captures,
+private organisation data, access tokens or real identities. The example resource
+URLs are identifiers only: do not contact them or assume the example namespaces
+are available. Public documentation URLs identify sources, not sample accounts.
+
+Only data and this guide are supplied. No application code, tests, generators,
+configuration, adapters or scoring rules were changed to consume these files.
+The extensionless README keeps this guide visible under the repository's existing
+ignore rules without changing .gitignore.
+
+## Files and API versions
+
+- azure_devops.json: Azure DevOps REST 7.1.
+- github.json: GitHub REST, X-GitHub-Api-Version 2026-03-10, as shown in the
+  consulted public documentation. This does not change the application's API version.
+- gitlab.json: GitLab REST v4. Approval examples use the documented Enterprise
+  Edition/GitLab.com shape; some rule endpoints require Premium or Ultimate.
+  A server release or account feature set has not been verified.
+- bitbucket.json: Bitbucket Cloud REST 2.0. The official OpenAPI asset URL and
+  Atlassian's published test-summary field example are linked in the file.
+
+## Naming: synthetic_xxx where applicable
+
+Fictional display names, repository and project names, descriptions, titles,
+comments, report names, branch names and filenames use synthetic_ prefixes.
+For example: synthetic_atlas, synthetic_author and synthetic_unit_tests.
+Emails use synthetic_author@example.com, a reserved example domain.
+
+Where a provider identifier has a more restrictive character set, use the
+equivalent synthetic- prefix: synthetic-org, synthetic-author and
+synthetic-workspace. Composite names and URLs contain these marked segments.
+
+The following deliberately keep their native representation:
+
+- API field names, such as pullRequestId, approved_by and number_of_test_cases.
+  Renaming them synthetic_pullRequestId would no longer model the API response.
+- Provider-defined enums and discriminators: completed, succeeded, APPROVED,
+  MERGED, pullrequest, pipeline_state_completed, Exact, group and private.
+- Booleans, nulls, numeric counters, HTTP codes and pagination parameters.
+- Numeric IDs: fictional 900xxx identifiers, except provider-scoped PR/MR
+  numbers and build numbers. These ranges are not claimed to be vendor-reserved.
+- UUIDs: recognisable repeated-digit, correctly formatted fictional UUIDs;
+  Bitbucket retains its curly-brace UUID convention.
+- Git hashes: repeated hexadecimal characters of the proper 40-character length.
+- ISO-8601 timestamps, native URI schemes, MIME types and API version strings.
+- The Azure minimum-reviewer policy type UUID is a real documented provider
+  constant, not an organisation or person identifier.
+- Documentation URLs, provider hostnames and fixed API path components.
+
+Do not prefix these values with synthetic_ if it would change their type,
+invalidate the identifier, or change the provider's defined meaning.
+
+## Common outer structure
+
+The outer object is a data-pack envelope, not a response returned by a provider.
+
+- dataset: unmistakably synthetic name for the pack.
+- provider / api_version: provider and API family represented.
+- documentation_date / provenance / profile: source and verification boundaries.
+- request_headers: non-secret example request headers, where included.
+- window: fixed scenario context shared by the packs. Events are considered in
+  [2026-01-01T00:00:00Z, 2026-02-01T00:00:00Z), observed on 2 February 2026.
+  These are scenario definitions, not an implemented assessment policy.
+- sources: keys pointing to official endpoint documentation.
+- responses: the baseline response examples.
+- edge_cases: independent alternate responses or additional failing requests.
+- expected_facts: independently specified arithmetic and known interpretation
+  limits for the baseline, not maturity scores or executable assertions.
+- limitations: provider-specific cautions.
+
+Each baseline entry contains:
+
+- name: synthetic identifier for this response.
+- source: key into sources.
+- method / url: the represented read-only HTTP request.
+- status / headers / body: HTTP response status, headers and native response body.
+
+When using a payload manually in a mock, supply body as the response JSON and
+status/headers as the HTTP metadata. Do not feed the whole data-pack envelope
+to a provider parser.
+
+An edge case either names response_to, identifying the baseline request whose
+response it replaces, or supplies its own method/url/source. Its status, headers
+and body replace the entire baseline response. Do not merge a successful body's
+missing counters back into an incomplete/error example. Pick one scenario at a
+time; the alternatives are not a chronological series to concatenate.
+
+Edge-case classifications distinguish documented selected-field shapes from
+deliberately incomplete/malformed or HTTP-failure examples. The latter are
+adversarial inputs, not claims that a conforming vendor response has that shape.
+expected_interpretation is a human explanation, not a rule newly wired into code.
+
+## Provider-specific structure and relationships
+
+Azure DevOps:
+
+- Projects have two pages with x-ms-continuationtoken and continuationToken.
+- Collections use count/value envelopes, not bare arrays.
+- synthetic_aster and synthetic_birch have distinct project UUIDs. The repository,
+  PR, build, tests, coverage and policy examples refer to synthetic_aster only.
+- Repository UUID 2222... is synthetic_atlas; 4444... is synthetic_empty.
+- PR 900011 was opened before the window and closed inside it. Current reviewer
+  votes are included; complete revision-valid approval history is not supplied.
+- Build 900007 has an intentionally unusual old queue date and an in-window
+  finish. Build 900008 is running. Build 900009 finishes exactly at the exclusive
+  end and is outside this scenario's completion window.
+- Test runs 900701/900702 explicitly link to build 900007. Their native counts
+  total 18 passed out of 20 reported tests: 90%. The documented failed counter
+  is unanalyzedTests. Missing passed counts must stay unknown.
+- Coverage provides 80 covered plus 20 uncovered lines: 80% for this one module.
+  The alternate missing-denominator example cannot establish a percentage.
+- Policy scope targets that repository's refs/heads/synthetic_main branch.
+
+GitHub:
+
+- GET /user/repos uses bare-array pages and a Link header. This represents the
+  authenticated-user endpoint, not the public-only /users/{owner}/repos endpoint.
+- Repo 900101 is synthetic_atlas; 900102 is synthetic_archived. Both are private.
+- PR number 11 belongs to repo 900101. It has a distinct global id, source/base
+  hashes, explicit merged_at and a later updated_at.
+- The history includes an approval of an older hash, then changes requested on
+  the current hash. Finding any APPROVED item is insufficient review logic.
+- Workflow run 900007 and check run 900071 share check suite 900700. The check
+  supplies completed_at. The workflow's later updated_at is not completion time.
+- A workflow's success and artifact metadata do not supply native test totals.
+  passed_tests/reported_tests/pass percentage are deliberately null.
+- The artifact is expired; the alternate download returns 410. No artifact file
+  contents are invented. The branch-rules response is distinct from the example
+  permission-denied classic-protection request.
+
+GitLab:
+
+- Group-project pages are bare arrays with X-Next-Page and a Link header.
+- Project 900101 is synthetic_atlas; 900102 is synthetic_birch. An independent
+  alternate makes the second project empty with a null default branch.
+- MR global id 900011 has iid 11 in project 900101. Another project's iid 11
+  identifies a different MR: use project scope, not the IID alone.
+- /approvals lists approvers; /approval_state describes rule satisfaction. The
+  Enterprise Edition no-rules alternate is approved=true with approved_by=[].
+  This means no configured requirements remain, not that someone reviewed it.
+- approved_at is a documented approval timestamp; these selected responses still
+  do not provide a complete history linking approval validity to the merge revision.
+- Pipeline 900007 has separate list/detail responses. Test summary build_ids
+  references job 900071. The include_retried jobs list also contains job 900070.
+- The summary reports 18 successes out of 20: 90%. It must not be added again
+  for every listed retry. JUnit reporting does not itself determine a job's exit
+  status, so the example can contain test failures while CI reports success.
+- Pipeline coverage=null is unknown, not zero coverage.
+
+Bitbucket Cloud:
+
+- Paginated resources use values and next. The final inventory alternate omits
+  optional size; that omission alone is not proof of collection failure.
+- Workspace, repository, pipeline and step IDs are braced UUIDs. Request URLs
+  percent-encode the braces. Repository 2222... is synthetic_atlas.
+- PR 11 belongs to that repository. Its activity update records the synthetic
+  merge event on 10 January. updated_on records a later update. The approver's
+  participated_on is their 9 January approval; the non-approver commenter's value
+  is their later comment. Neither is a merge timestamp. Current participants do
+  not prove historical revision approval validity.
+- Pipeline 7777... contains step 9999.... Test counts are step-scoped:
+  number_of_successful_test_cases=18 and number_of_test_cases=20 gives 90%.
+  A successful pipeline state does not establish those counts by itself.
+- The COVERAGE commit report is a producer's 80% assertion, without a line
+  numerator/denominator. It cannot safely be pooled with ADO's line counts.
+- A configured minimum-approval restriction does not prove that the account's
+  merge checks are enforced. No account plan or enforced flag is invented.
+
+## Scope and limits
+
+These files retain selected documented fields. They deliberately omit unrelated
+vendor fields, including fields a complete OpenAPI response schema might require.
+They are suitable for discussing endpoint structures and manually constructing
+offline cases, not certification of full vendor-schema conformance.
+
+No live provider, plan, permission, pagination ceiling, retention or historical
+behaviour has been verified. A complete transport replay would need additional
+responses for every request the client makes, such as ADO timelines and threads.
+Unknown requests must not fall through to a real network when these are used later.
+
+The expected arithmetic describes reported counts in these invented examples.
+It does not settle skipped/retried-test eligibility, maturity thresholds, ownership,
+exemptions or other product policy. All review-coverage expectations remain null
+where sufficient historical revision-valid evidence is not provided.
+
+Production support is unchanged: ADO and the existing synthetic provider only.
+The three other JSON files do not implement GitHub, GitLab or Bitbucket adapters.
+The existing application synthetic provider is separate from this data-only folder.
+
+## Validation performed
+
+Validation is limited to parsing the supplied JSON, checking response references,
+pagination links, fictional naming, scoped identity relationships and the arithmetic
+described above. No application code or tests are adapted or run for these files.
+These checks do not establish live API compatibility or a working adapter.

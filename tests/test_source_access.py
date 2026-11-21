@@ -16,7 +16,7 @@ from plumbline.config.access import checked_path, validate_database_url, validat
 from plumbline.config.settings import Settings
 
 
-@pytest.mark.parametrize("name", ["OML", "OMEngineering", "old-mutual", "oml-sandbox", "OM-Engineering"])
+@pytest.mark.parametrize("name", ["ACME", "AcmeEngineering", "example-team", "acme-sandbox", "ACME-Engineering"])
 def test_names_are_accepted_without_network(name, tmp_path):
     Settings(_env_file=None, azure_devops_pat="synthetic-pat", azure_devops_org=name)
     CollectionConfig(org=name, project=name)
@@ -35,7 +35,7 @@ async def test_requests_are_scoped_and_redirects_rejected():
     validate_source_url("https://dev.azure.com/local-org/_apis/projects", "https://dev.azure.com/local-org")
     trace = source_request_trace(base)
     for url in (
-        "https://dev.azure.com/OMEngineering/_apis/projects",
+        "https://dev.azure.com/ExampleEngineering/_apis/projects",
         "https://dev.azure.com/other-org/_apis/projects",
         base + "/../other-org/_apis/projects",
         base + "/%252e%252e/other-org/_apis/projects",
