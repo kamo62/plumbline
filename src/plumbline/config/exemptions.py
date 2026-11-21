@@ -62,8 +62,9 @@ class ExemptionManager:
     Foundation implementation (MVP): safe defaults when file missing/invalid.
     """
 
-    def __init__(self, config_path: Path):
+    def __init__(self, config_path: Path, *, strict: bool = False):
         self.config_path = Path(config_path)
+        self.strict = strict
         self.config: Optional[ExemptionConfig] = None
         self._metric_cache: Dict[tuple, bool] = {}
         self._dimension_cache: Dict[tuple, bool] = {}
@@ -72,14 +73,49 @@ class ExemptionManager:
     def _load_config(self) -> None:
         try:
             if not self.config_path.exists():
+                if self.strict:
+                    raise FileNotFoundError(self.config_path)
                 self.config = ExemptionConfig(version="1.0", exemptions={}, pattern_exemptions=[])
                 return
             data = yaml.safe_load(self.config_path.read_text()) or {}
+            if self.strict:
+                self._validate_strict(data)
             self.config = ExemptionConfig(**data)
         except Exception as e:
+            if self.strict:
+                raise ValueError("Unable to load configured exemptions") from e
             # Fail-safe: no exemptions, but log error
             logging.error(f"Failed to load exemption config from {self.config_path}: {e}")
             self.config = ExemptionConfig(version="1.0", exemptions={}, pattern_exemptions=[])
+
+    @staticmethod
+    def _validate_strict(data):
+        def keys(value, allowed):
+            if not isinstance(value, dict) or set(value) - allowed:
+                raise ValueError("Invalid exemption configuration")
+        keys(data, {"version", "exemptions", "pattern_exemptions"})
+        exemptions = data.get("exemptions", {})
+        patterns = data.get("pattern_exemptions", [])
+        if not isinstance(exemptions, dict) or not isinstance(patterns, list):
+            raise ValueError("Invalid exemption configuration")
+        for rule in exemptions.values():
+            keys(rule, {"level", "exempt_metrics", "exempt_dimensions", "repositories", "reason", "owner", "effective_date", "expiration_date"})
+            repos = rule.get("repositories", [])
+            if not isinstance(repos, list):
+                raise ValueError("Invalid repository exemptions")
+            for repo in repos:
+                keys(repo, {"name", "exempt_metrics", "exempt_dimensions"})
+                if not isinstance(repo.get("name"), str) or not repo["name"]:
+                    raise ValueError("Invalid repository exemption name")
+                for key in ("exempt_metrics", "exempt_dimensions"):
+                    if key in repo and (not isinstance(repo[key], list) or any(not isinstance(x, str) for x in repo[key])):
+                        raise ValueError("Invalid repository exemption list")
+        for pattern in patterns:
+            keys(pattern, {"pattern", "exempt_metrics", "exempt_dimensions", "reason", "owner", "expiration_date"})
+        parsed = ExemptionConfig(**data)
+        for rule in parsed.exemptions.values():
+            if rule.expiration_date and rule.expiration_date < rule.effective_date:
+                raise ValueError("Invalid exemption dates")
 
     def invalidate_cache(self) -> None:
         self._metric_cache.clear()

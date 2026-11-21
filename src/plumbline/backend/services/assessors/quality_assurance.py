@@ -246,6 +246,8 @@ class QualityAssuranceAssessor:
                     logger.warning(f"Empty modules list for build {build_id}")
                     continue
                 
+                if any(isinstance(m, dict) and "statistics" in m and not {"linesCovered", "linesNotCovered"} <= set(m["statistics"]) for m in modules_list):
+                    continue
                 total_covered = 0
                 total_not_covered = 0
                 
@@ -254,7 +256,7 @@ class QualityAssuranceAssessor:
                         # Try to get coverage directly if it exists
                         if 'coverage' in module:
                             coverage_value = float(module['coverage'])
-                            if coverage_value > 0:
+                            if coverage_value >= 0:
                                 finish_time = str(build_dict.get('finishTime', ''))
                                 if finish_time:
                                     try:
@@ -266,8 +268,10 @@ class QualityAssuranceAssessor:
                         # Otherwise calculate from statistics
                         elif 'statistics' in module:
                             stats = module['statistics']
-                            covered = stats.get('linesCovered', 0)
-                            not_covered = stats.get('linesNotCovered', 0)
+                            if 'linesCovered' not in stats or 'linesNotCovered' not in stats:
+                                continue
+                            covered = stats['linesCovered']
+                            not_covered = stats['linesNotCovered']
                             
                             # Accumulate totals for overall calculation
                             total_covered += covered

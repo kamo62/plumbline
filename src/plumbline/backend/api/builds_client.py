@@ -39,7 +39,7 @@ class BuildsClient:
             raise ADORequestError(f"Unexpected error getting security scan results: {e}") from e
 
     async def get_builds(
-        self, project: str, project_name: Optional[str] = None, from_date: Optional[str] = None
+        self, project: str, project_name: Optional[str] = None, from_date: Optional[str] = None, *, candidate=None
     ) -> List[Dict[str, Any]]:
         try:
             project_name = project_name or project
@@ -48,12 +48,18 @@ class BuildsClient:
             params: Dict[str, Any] = {"api-version": "7.1"}
             if from_date:
                 params["minTime"] = from_date
-                self._parent.logger.info(f"Filtering builds created after {from_date}")
+                params["queryOrder"] = "finishTimeDescending"
+                self._parent.logger.info(f"Filtering builds completed after {from_date}")
 
             builds = await self._parent.get_paginated_results(url, session, params)
+            if candidate is not None:
+                builds = [build for build in builds if candidate(build)]
             detailed_builds: List[Dict[str, Any]] = []
 
             for build in builds:
+                if not isinstance(build, dict):
+                    detailed_builds.append(build)
+                    continue
                 try:
                     build_id = build["id"]
                     self._parent.logger.debug(f"Processing build {build_id} for {project_name}")
@@ -120,20 +126,27 @@ class BuildsClient:
         try:
             session = await self._parent._get_aiohttp_session()
             url = f"{self._parent.base_url}/{project}/_apis/test/runs"
-            params = {"api-version": "7.1", "buildUri": f"vstfs:///Build/Build/{build_id}"}
+            params = {"api-version": "7.1", "buildUri": f"vstfs:///Build/Build/{build_id}", "includeRunDetails": "true"}
             test_runs = await self._parent.get_paginated_results(url, session, params)
-            unlinked = sum(1 for run in test_runs if not isinstance(run.get("build"), dict) or run["build"].get("id") is None)
-            test_runs = [run for run in test_runs if isinstance(run.get("build"), dict) and str(run["build"].get("id")) == str(build_id)]
+            unlinked = sum(1 for run in test_runs if not isinstance(run, dict) or not isinstance(run.get("build"), dict) or run["build"].get("id") is None)
+            test_runs = [run for run in test_runs if isinstance(run, dict) and isinstance(run.get("build"), dict) and str(run["build"].get("id")) == str(build_id)]
             if not test_runs:
-                return {"results": [{"total": 0, "passed": 0, "failed": 0, "skipped": 0, "not_executed": 0}], "unlinked_runs": unlinked}
+                return {"results": [], "unlinked_runs": unlinked}
             total = passed = failed = skipped = not_executed = 0
             for run in test_runs:
+                # REST 7.1 TestRun calls its failed count unanalyzedTests.
+                # A missing passed count is not proof of zero passes.
+                counts = [run.get("totalTests"), run.get("passedTests"), run.get("unanalyzedTests"), run.get("notApplicableTests", 0), run.get("incompleteTests", 0)]
+                if (any(type(v) is not int or v < 0 for v in (counts[0], counts[1], counts[3], counts[4]))
+                        or (counts[2] is not None and (type(counts[2]) is not int or counts[2] < 0))
+                        or sum(v for v in counts[1:] if v is not None) > counts[0]):
+                    return {"results": [], "unlinked_runs": unlinked, "malformed_runs": True, "linked_runs": len(test_runs)}
                 total += run.get("totalTests", 0)
                 passed += run.get("passedTests", 0)
-                failed += run.get("failedTests", 0)
+                failed = failed + counts[2] if failed is not None and counts[2] is not None else None
                 not_executed += run.get("notApplicableTests", 0)
                 skipped += run.get("incompleteTests", 0)
-            return {"results": [{"total": total, "passed": passed, "failed": failed, "skipped": skipped, "not_executed": not_executed}], "unlinked_runs": unlinked}
+            return {"results": [{"total": total, "passed": passed, "failed": failed, "skipped": skipped, "not_executed": not_executed}], "unlinked_runs": unlinked, "linked_runs": len(test_runs)}
         except ADORequestError:
             raise
         except aiohttp.ClientError as e:

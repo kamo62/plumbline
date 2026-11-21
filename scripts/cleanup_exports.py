@@ -56,7 +56,7 @@ def cleanup_once(root: Path, retention_days: int, dry_run: bool = False) -> int:
             if Path(row[1]).resolve() != entry.resolve():
                 continue
             active = connection.execute(text("SELECT COUNT(*) FROM jobs WHERE run_id=:id AND status IN ('queued','running')"), {"id": run_id}).scalar()
-            snapshots = connection.execute(text("SELECT (SELECT COUNT(*) FROM raw_metrics WHERE run_id=:id) + (SELECT COUNT(*) FROM metrics WHERE run_id=:id)"), {"id": run_id}).scalar()
+            snapshots = connection.execute(text("SELECT (SELECT COUNT(*) FROM raw_metrics WHERE run_id=:id) + (SELECT COUNT(*) FROM metrics WHERE run_id=:id) + (SELECT COUNT(*) FROM run_evidence WHERE run_id=:id) + (SELECT COUNT(*) FROM metric_measurements WHERE run_id=:id)"), {"id": run_id}).scalar()
             if active or snapshots:
                 continue  # Preserve all stored baselines until expiry is modelled explicitly.
             targets = [entry, *entry.rglob("*")]

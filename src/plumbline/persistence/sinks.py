@@ -22,16 +22,21 @@ class CompositeSink(StorageSink):
     sinks: List[StorageSink]
     # Propagate DB sink run_id to callers for validation/reporting
     last_run_id: Any = None
+    last_snapshot_id: str | None = None
 
     def persist(self, results: AssessmentResults, run_context: Dict[str, Any]) -> Dict[str, str]:
         outputs: Dict[str, str] = {}
         self.last_run_id = None
+        self.last_snapshot_id = None
         for sink in self.sinks:
             outputs.update(sink.persist(results, run_context) or {})
             # If a sink exposes last_run_id, propagate it
             lrid = getattr(sink, "last_run_id", None)
             if lrid is not None:
                 self.last_run_id = lrid
+            snapshot_id = getattr(sink, "last_snapshot_id", None)
+            if snapshot_id is not None:
+                self.last_snapshot_id = snapshot_id
         return outputs
 
 
@@ -106,6 +111,7 @@ class PostgresSink(StorageSink):
     def __init__(self, engine):
         self._engine = engine
         self.last_run_id = None
+        self.last_snapshot_id = None
 
     def _serialize_value(self, obj: Any) -> Any:
         if isinstance(obj, datetime):
@@ -162,6 +168,8 @@ class PostgresSink(StorageSink):
         from decimal import Decimal, InvalidOperation
         from uuid import uuid4
 
+        self.last_run_id = None
+        self.last_snapshot_id = None
         now = datetime.now(timezone.utc)
         # Ensure executed_at is timezone-aware
         executed_at_raw = run_context.get("executed_at")
@@ -193,6 +201,12 @@ class PostgresSink(StorageSink):
             for key, value in values.items():
                 if key != "id":
                     setattr(run, key, value)
+            snapshot_id = None
+            if results.get("provider_snapshot") is not None:
+                from plumbline.collection.store import link_run_snapshot, persist_snapshot
+                conn = session.connection()
+                snapshot_id = persist_snapshot(conn, results["provider_snapshot"])
+                link_run_snapshot(conn, run_id, snapshot_id)
             # One complete snapshot per UUID; retries replace its dependent records atomically.
             session.execute(delete(RawMetric).where(RawMetric.run_id == run_id))
             session.execute(delete(Metric).where(Metric.run_id == run_id))
@@ -266,3 +280,4 @@ class PostgresSink(StorageSink):
             session.commit()
             # Track last run id for downstream validation/reporting
             self.last_run_id = str(run.id)
+            self.last_snapshot_id = snapshot_id

@@ -16,8 +16,7 @@ def storage(tmp_path, monkeypatch):
     migrate(url)
     exports = (tmp_path / 'exports').resolve()
     exports.mkdir()
-    monkeypatch.setattr(api, 'EXPORTS_DIR', exports)
-    return Settings(database_url=url), exports
+    return Settings(database_url=url, exports_dir=exports), exports
 
 
 def add_run(settings, run_id, status='succeeded', when=None, directory=None):
@@ -63,7 +62,7 @@ async def test_artifact_directory_scope_and_listing(storage, tmp_path):
     (directory / 'reports' / 'result.json').write_text('{}')
     add_run(settings, run, directory=directory)
     listing = await api.list_artifacts(run, settings)
-    assert [item['name'] for item in listing['files']] == [f'{run}/reports/result.json']
+    assert [item['name'] for item in listing['files']] == ['reports/result.json']
 
 
 def test_health_does_not_expose_database_error(monkeypatch, storage):
@@ -91,3 +90,37 @@ def test_database_run_includes_job_output_and_completeness(storage):
         assert record['outputs'] == result['outputs']
         assert record['completeness'] == result['completeness']
         assert record['assessment_status'] == result['assessment_status']
+
+
+def test_canonical_snapshot_link_is_visible_and_blocks_deletion(storage):
+    import asyncio
+    from plumbline.collection.store import link_run_snapshot, persist_snapshot
+    from plumbline.jobs.models import Job
+    from plumbline.providers.synthetic import SyntheticProvider, WINDOW
+
+    settings, _ = storage
+    run = uuid4()
+    add_run(settings, run)
+    snapshot = asyncio.run(SyntheticProvider().collect(['Alpha'], WINDOW))
+    with api.get_engine(settings).begin() as conn:
+        snapshot_id = persist_snapshot(conn, snapshot)
+        link_run_snapshot(conn, run, snapshot_id)
+    # Standalone runs have no Job row, but still expose the canonical evidence ID.
+    for record in (api.get_run_status(run, settings), api.list_runs(settings=settings)[0]):
+        assert record['snapshot_id'] == snapshot_id
+    with pytest.raises(HTTPException) as exc:
+        api.delete_run_data(run, settings)
+    assert exc.value.status_code == 409
+
+    # Mutable job summaries cannot override the immutable link. Older unlinked
+    # jobs retain their existing snapshot-ID fallback without invented backfill.
+    older = uuid4()
+    add_run(settings, older)
+    with session_for(settings.database_url) as db:
+        for identifier in (run, older):
+            db.add(Job(run_id=identifier, config={}, status='succeeded',
+                       result={'snapshot_id': 'historical-summary-id'},
+                       created_at=datetime.now(timezone.utc)))
+        db.commit()
+    assert api.get_run_status(run, settings)['snapshot_id'] == snapshot_id
+    assert api.get_run_status(older, settings)['snapshot_id'] == 'historical-summary-id'

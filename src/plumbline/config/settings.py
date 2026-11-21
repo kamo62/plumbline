@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     # Runtime environment and database
     run_env: Literal["local", "ci", "dev", "prod"] = Field(default="local", description="Runtime environment (local|ci|dev|prod)")
     database_url: Optional[str] = Field(default="sqlite:///plumbline.db", description="Database connection URL supplied through local configuration")
+    exports_dir: Path = Field(default=Path("exports"), description="Shared report directory for the API and worker")
 
     # Explicit transport configuration; never infer HTTPS from forwarded headers.
     cookie_secure: Optional[bool] = Field(default=None, description="Set for HTTPS; defaults to secure outside local and CI")
@@ -54,10 +55,25 @@ class Settings(BaseSettings):
 
     _validate_org = field_validator("azure_devops_org")(lambda value: validate_org(value) if value else value)
 
+    @field_validator("exemptions_file", mode="before")
+    @classmethod
+    def empty_exemptions_path(cls, value):
+        return None if value == "" else value
+
     @field_validator("thresholds_file", "exemptions_file", "log_file")
     @classmethod
     def validate_configured_path(cls, value: Optional[Path]) -> Optional[Path]:
         return checked_path(value) if value is not None else None
+
+    @field_validator("exports_dir", mode="before")
+    @classmethod
+    def default_empty_exports_dir(cls, value):
+        return Path("exports") if isinstance(value, str) and not value.strip() else value
+
+    @field_validator("exports_dir")
+    @classmethod
+    def resolve_exports_dir(cls, value: Path) -> Path:
+        return checked_path(value).resolve()
 
     @field_validator("database_url")
     @classmethod

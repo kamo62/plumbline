@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 import pytest
-from fastapi.routing import APIRoute
 from fastapi.testclient import TestClient
 
 from plumbline.api import main as api
@@ -76,7 +75,7 @@ def test_real_application_password_csrf_tokens_and_override(application, tmp_pat
     directory = exports / str(run)
     directory.mkdir(parents=True)
     (directory / 'report.json').write_text('{}')
-    monkeypatch.setattr(api, 'EXPORTS_DIR', exports)
+    api.app.dependency_overrides[api.get_settings] = lambda: Settings(database_url=url, exports_dir=exports)
     with session_for(url) as db:
         db.add(Run(id=run, executed_at=datetime.now(timezone.utc), artifacts_dir=str(directory)))
         db.commit()

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID, uuid4
+from datetime import datetime, timezone, timedelta
 
 import pytest
 from pydantic import ValidationError
@@ -40,19 +41,32 @@ def fake_services(monkeypatch, *, fail=False):
         clients.append(client)
         return client
 
-    class Collector:
-        async def collect_all_raw_data(self, project):
-            if fail:
-                raise RuntimeError("collection failed")
-            return {"project": project, "repositories": [{"id": "repo-1"}, {"id": "repo-2"}]}
+    async def collect(projects, window):
+        options.append((projects, window))
+        if fail:
+            raise RuntimeError("collection failed")
+        return {"project": projects[0], "repositories": [{"id": "repo-1"}, {"id": "repo-2"}]}
 
-    def create(service, client, **kwargs):
-        options.append((service, kwargs))
-        return Collector()
-
+    from tests.provider_stub import inject
+    inject(monkeypatch, collect)
     monkeypatch.setattr(runner, "AzureDevOpsClient", client_factory)
-    monkeypatch.setattr(runner.MetricsServiceFactory, "create_service", create)
     return clients, options
+
+
+@pytest.mark.asyncio
+async def test_database_save_error_does_not_expose_sql(tmp_path, monkeypatch, caplog):
+    from sqlalchemy.exc import OperationalError
+    fake_services(monkeypatch)
+
+    def fail_save(*args):
+        raise OperationalError("INSERT private_statement", {"private_parameter": "sensitive"},
+                               RuntimeError("database is locked"))
+
+    result = await runner.execute_collection_run(config(tmp_path), settings(), persist_result=fail_save)
+    assert result["status"] == "failed"
+    assert result["error"] == "Database operation failed"
+    assert "private_statement" not in caplog.text
+    assert "private_parameter" not in caplog.text
 
 
 @pytest.mark.asyncio
@@ -66,8 +80,8 @@ async def test_synthetic_collection_uses_full_window_and_actual_files(tmp_path, 
     result = await runner.execute_collection_run(config(tmp_path, org="override", write_files=True), settings(), run_id)
     assert result["status"] == "succeeded"
     assert clients[0].org == "override" and clients[0].closed
-    assert options == [("raw", {"minimal": False, "enable_delta": False,
-                                "skip_stale_repos": False, "force_year_window": True})]
+    assert options[0][0] == ["test-project"]
+    assert options[0][1].start == datetime(options[0][1].end.year, 1, 1, tzinfo=timezone.utc)
     raw_path = Path(result["outputs"]["raw_json"])
     assert raw_path.parent == tmp_path / run_id
     assert len(json.loads(raw_path.read_text())["repositories"]) == 2
@@ -114,27 +128,26 @@ async def test_shared_engine_is_not_disposed_and_metadata_updated(tmp_path, monk
     result = await runner.execute_collection_run(config(tmp_path, org="override", write_db=True), settings("postgresql://unused"))
     assert result["status"] == "succeeded" and not engine.disposed
     statement, params = statements[0]
-    assert "org=EXCLUDED.org" in statement and "project=EXCLUDED.project" in statement
+    assert "ON CONFLICT (id) DO NOTHING" in statement
     assert params["org"] == "override" and params["project"] == "test-project"
 
 
 @pytest.mark.asyncio
 async def test_incomplete_collection_keeps_raw_evidence_and_blocks_scoring(tmp_path, monkeypatch):
     fake_services(monkeypatch)
-    class Collector:
-        async def collect_all_raw_data(self, project):
-            return {"repositories": [{"id": "good"}], "completeness": {
-                "complete": False, "failures": [{"scope": "build", "build_id": 7, "errors": {"tests": "unavailable"}}]}}
     calls = []
-    def create(service, client, **kwargs):
-        calls.append(service)
-        return Collector()
-    monkeypatch.setattr(runner.MetricsServiceFactory, "create_service", create)
+    async def collect(projects, window):
+        calls.append(projects)
+        return {"repositories": [{"id": "good"}], "completeness": {
+            "complete": False, "failures": [{"scope": "build", "build_id": 7, "errors": {"tests": "unavailable"}}]}}
+    from tests.provider_stub import inject
+    inject(monkeypatch, collect)
+    monkeypatch.setattr(runner.MetricsServiceFactory, "create_service", lambda *a, **k: pytest.fail("incomplete collection assessed"))
     result = await runner.execute_collection_run(config(tmp_path, include_maturity=True, write_files=True), settings())
     assert result["status"] == "succeeded"
     assert result["assessment_status"] == "blocked_incomplete_collection"
     assert result["completeness"]["failures"][0]["build_id"] == 7
-    assert calls == ["raw"]
+    assert calls == [["test-project"]]
     assert json.loads(Path(result["outputs"]["raw_json"]).read_text())["repositories"] == [{"id": "good"}]
     assert "maturity_assessment" not in result["outputs"]
 
@@ -165,7 +178,7 @@ class SyntheticTransport(FakeClient):
 
     async def get_project(self, project):
         self.project_calls.append(project)
-        if project == "Broken":
+        if project in ("Broken", "Missing"):
             raise ValueError("synthetic project failure")
         return {"id": project, "name": project}
 
@@ -178,23 +191,21 @@ class SyntheticTransport(FakeClient):
     async def get_policy_configurations(self, *args): return []
     async def get_policy_types(self, *args): return []
     async def get_builds(self, project, *args):
-        return [{"id": 1 if self.collision or project == "Archive Alpha" else 2}]
+        stamp = (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()
+        return [{"id": 1 if self.collision or project == "Archive Alpha" else 2, "queueTime": stamp, "finishTime": stamp, "status": "completed", "result": "succeeded", "repository": {"id": project}}]
     async def get_code_coverage(self, *args): return {}
-    async def get_test_results(self, *args): return {}
+    async def get_test_results(self, *args): return {"results": [], "unlinked_runs": 0}
     async def get_security_scan_results(self, *args): return []
 
 
 @pytest.mark.asyncio
 async def test_selected_projects_real_collector_blocks_one_consolidated_run(tmp_path, monkeypatch):
-    from plumbline.backend.services.raw_data_collector import RawDataCollector
     clients, assessments = [], []
     def client_factory(settings):
         client = SyntheticTransport(settings)
         clients.append(client)
         return client
     def create(service, client, **kwargs):
-        if service == "raw":
-            return RawDataCollector(client, **kwargs)
         assessments.append(service)
         pytest.fail("incomplete evidence must not be assessed")
     monkeypatch.setattr(runner, "AzureDevOpsClient", client_factory)
@@ -206,13 +217,13 @@ async def test_selected_projects_real_collector_blocks_one_consolidated_run(tmp_
     assert result["status"] == "succeeded"
     assert str(UUID(result["id"])) == result["id"]
     assert result["assessment_status"] == "blocked_incomplete_collection"
-    assert {f["project"] for f in result["completeness"]["failures"]} == {"Broken", "Missing"}
+    assert {f["project_id"] for f in result["completeness"]["failures"]} == {"Broken", "Missing"}
     raw = json.loads(Path(result["outputs"]["raw_json"]).read_text())
     assert {repo["id"] for repo in raw["repositories"]} == {"Archive Alpha", "Beta"}
     assert all(repo["project"]["organisation"] == "synthetic-org" for repo in raw["repositories"])
     assert all(data["project"]["organisation"] == "synthetic-org" for data in raw["repository_data"].values())
     assert len(raw["builds"]) == 2 and len(raw["build_data"]) == 2
-    assert clients[0].project_calls == ["Archive Alpha", "Beta", "Broken"]
+    assert clients[0].project_calls == ["Archive Alpha", "Beta", "Broken", "Missing"]
     assert clients[0].closed and not assessments
 
 
@@ -229,7 +240,6 @@ async def test_build_id_collision_marks_consolidation_incomplete():
 
 @pytest.mark.asyncio
 async def test_two_projects_create_one_consolidated_assessment(tmp_path, monkeypatch):
-    from plumbline.backend.services.raw_data_collector import RawDataCollector
     captured = []
     class Assessment:
         def assess_raw_data(self, raw):
@@ -237,10 +247,35 @@ async def test_two_projects_create_one_consolidated_assessment(tmp_path, monkeyp
             return {"repositories": {}}
     monkeypatch.setattr(runner, "AzureDevOpsClient", SyntheticTransport)
     monkeypatch.setattr(runner.MetricsServiceFactory, "create_service",
-                        lambda service, client, **kwargs: RawDataCollector(client, **kwargs) if service == "raw" else Assessment())
+                        lambda service, client, **kwargs: Assessment())
     result = await runner.execute_collection_run(CollectionConfig(
         projects=["Archive Alpha", "Beta"], write_files=False, write_db=False,
         include_maturity=True, output_path=str(tmp_path / "metrics")), settings())
     assert result["assessment_status"] == "completed" and result["completeness"]["complete"]
     assert len(captured) == 1
     assert {repo["id"] for repo in captured[0]["repositories"]} == {"Archive Alpha", "Beta"}
+
+
+@pytest.mark.asyncio
+async def test_configured_missing_or_invalid_exemptions_fail_before_collection(tmp_path):
+    for path in (tmp_path / 'missing.yml', tmp_path / 'invalid.yml'):
+        if path.name == 'invalid.yml':
+            path.write_text('exemptions: [invalid]')
+        configured = settings().model_copy(update={'exemptions_file': path})
+        result = await runner.execute_collection_run(config(tmp_path), configured)
+        assert result['status'] == 'failed'
+        assert 'Invalid exemptions configuration' in result['error']
+
+
+@pytest.mark.asyncio
+async def test_failure_shaped_assessment_is_not_reported_completed(tmp_path, monkeypatch):
+    fake_services(monkeypatch)
+    class FailedAssessment:
+        def assess_raw_data(self, raw):
+            return {'repositories': {}, 'overall': {'explanation': ['Assessment failed']}}
+    monkeypatch.setattr(runner.MetricsServiceFactory, 'create_service', lambda *args, **kwargs: FailedAssessment())
+    result = await runner.execute_collection_run(config(tmp_path, include_maturity=True, write_files=True), settings())
+    assert result['assessment_status'] == 'failed'
+    assert result['assessment_error']['code'] == 'assessment_failed'
+    assert result['outputs'].get('raw_json')
+    assert not list(tmp_path.rglob('*maturity*'))

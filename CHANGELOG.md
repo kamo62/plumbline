@@ -2,6 +2,56 @@
 
 ## 0.1.0 (implementation in progress)
 
+- Added an authenticated, offline provider demo that reads the four fictional
+  source packs and shows the evidence and limits for each. Added PostgreSQL
+  audit-column support for immutable measurement IDs.
+- Repaired the offline UI smoke check after the package rename and kept the
+  historical baseline screenshots.
+
+- Added opt-in post-collection test-pass-rate diagnostics from verified original
+  snapshots, using explicit minimum samples and the versioned ADO reported-total
+  population. Preserve scoped inventories, observation cutoffs and evidence gaps.
+- Store immutable diagnostic results with frozen definitions and version-aware
+  verification; add authenticated retrieval/JSON export, transactional request audit
+  and deletion/cleanup protection via an independent additive 0008 migration.
+  Collection, legacy scoring and the data-only `synthetic_data/` packs are unchanged.
+
+- Added a shared ADO/synthetic saved-connection registry and authenticated provider
+  metadata, with consistent unknown-provider rejection and diagnostic dispatch.
+- Persist original provider snapshots for database-backed CLI runs as well as
+  workers, with immutable run-evidence links, checked content addresses and linked
+  evidence deletion/retention guards. Register additive OIDC schema tables without
+  enabling OIDC routes. Historical links are not backfilled.
+- Corrected `migrate --check` to inspect without applying migrations: exit 0 current,
+  2 pending and 1 on error. Added API-schema drift coverage and regenerated contracts.
+- Preserve linked run metadata/reports on a rejected standalone retry, and reject
+  malformed SQLite URI checks without creating files. Use SQLAlchemy-compatible URI
+  booleans and redact provider diagnostic logs.
+
+- Restricted remote run requests to server-owned output storage and internal
+  execution controls; added a shared export-root setting, absolute stored paths
+  and attempt-relative downloads verified through a synthetic saved-connection
+  API/worker journey.
+- Added bounded transient database recovery and graceful SIGTERM handling for
+  workers, preserving lease expiry as the fallback when release cannot reach storage.
+  Recovery covers polling/claiming; failed final saves return safe error text and
+  require resubmission.
+- Added an isolated, provider-neutral foundation for test pass rate and merged-PR
+  review coverage with explicit uncertainty and candidate inventories. It is not
+  connected to production scoring.
+
+- Include backend/frontend tests, their configuration/helpers and selected product
+  documentation in source archives. Packaging-only change; application version unchanged.
+- Put plain project files and `.gitignore` directly at the source ZIP root, retain
+  the bounded metric catalogue and reject bundled wheels/builds/runtimes. Preserve
+  existing ZIP/checksum files and write a companion SHA256 checksum.
+- Include the four fictional `synthetic_data/` provider JSON packs and their README
+  in source archives without changing data, application behaviour or version.
+
+- Preserve unavailable test counts in exports, document missing coverage denominators, and align ADO test failure fields, wildcard policy scopes and repository progress.
+
+- Correct ADO completion-window collection, test details, policy scope and coverage projection; retain uncertainty and scope provenance. Failed assessments retain evidence without maturity reports.
+
 - Updated the README for engineering-practices scope, provider availability and
   sanitised examples. Declared HTTP test-client and OIDC dependencies required
   to collect the existing test suite in a fresh environment.
@@ -39,7 +89,11 @@
   the React account and run controls, and leased worker execution with bounded
   recovery and repository progress. Saved connections can be selected for runs.
 - Added immutable provider evidence snapshots with conservative field checkpoints.
-  Collection still fetches full windows; incremental reconstruction and ADO
-  snapshot integration remain outstanding.
+  ADO and synthetic worker runs now persist the fetched provider snapshot.
+  Collection still fetches full windows; incremental reconstruction remains
+  outstanding. ADO project policies are projected to the existing legacy format;
+  incomplete or malformed evidence and identity collisions block legacy scoring.
+  Configured exemptions are applied and load failures fail the run. Security scan
+  detection retains the existing artifact-name heuristic.
 
 The new React UI, accounts, worker and Phase 2 features remain in progress.

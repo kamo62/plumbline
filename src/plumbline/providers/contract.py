@@ -61,6 +61,8 @@ class Snapshot:
     projects: list[Record] = field(default_factory=list)
     repositories: list[Record] = field(default_factory=list)
     builds: list[Record] = field(default_factory=list)
+    collection_started_at: datetime | None = None
+    collection_completed_at: datetime | None = None
 
 
 @runtime_checkable

@@ -1,6 +1,11 @@
 # Public provider API landscape
 
-Reviewed against public vendor documentation on 14 November 2026.
+Initial architecture review: 14 November 2026. Additional evidence research and
+authentication clarification: 16 November 2026.
+
+See the [provider evidence research](provider-evidence-research.md) for the
+capability matrix, review and CI semantics, assessment-definition gaps and runtime
+acceptance evidence. This remains an architectural view, not a setup guide.
 
 This is a rough, conceptual view of the evidence exposed by GitHub, GitLab and
 Bitbucket Cloud and its relationship to Plumbline's reporting scope. The arrows
@@ -272,6 +277,19 @@ retention; production/incident definitions; report audience, retention and delet
 policy; and comparable scoring definitions. These cannot be settled from public
 API documentation. No implementation, live collection or configuration changes
 were made to answer them.
+
+### Additional research: authentication and delivery metric changes
+
+Bitbucket's current changelog explicitly supports both Basic and Bearer
+authentication for API tokens. Basic with Atlassian email and token, described
+above, is one supported option. It must not be read as an exclusive scheme or as
+equivalence between personal tokens, resource tokens and OAuth credentials.
+[Bitbucket changelog](https://developer.atlassian.com/cloud/bitbucket/changelog/).
+
+DORA now documents five software delivery metrics, including deployment rework
+rate. The later delivery phase needs a deliberate definition/version decision;
+this research does not expand that phase or make practice scores DORA outcomes.
+[DORA definitions](https://dora.dev/guides/dora-metrics/).
 
 ## Boundaries of this picture
 

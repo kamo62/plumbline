@@ -449,7 +449,7 @@ class AzureDevOpsClient:
         return str(repo)
 
     async def get_pull_requests(
-        self, project: str, repository_id: str, min_time: Optional[str] = None
+        self, project: str, repository_id: str, min_time: Optional[str] = None, *, candidate=None
     ) -> List[Dict[str, Any]]:
         """Get pull requests for a repository
 
@@ -502,12 +502,17 @@ class AzureDevOpsClient:
             except Exception:
                 pass
 
+            if candidate is not None:
+                all_prs = [pr for pr in all_prs if candidate(pr)]
+
             # Get details for each PR with limited concurrency
             detailed_prs: List[Dict[str, Any]] = []
 
             async def _fetch_pr_details(pr: Dict[str, Any]) -> Optional[Dict[str, Any]]:
                 async with self._semaphore_expensive:
                     try:
+                        if not isinstance(pr, dict):
+                            return {"collection_failures": {"details": "Malformed pull request"}}
                         pr_id = pr.get("pullRequestId")
                         if not pr_id:
                             logger.warning(f"PR missing pullRequestId: {pr.get('title', 'unknown')} in {project}/{repository_id}")
@@ -580,6 +585,34 @@ class AzureDevOpsClient:
             error_msg = f"Unexpected error getting pull requests: {str(e)}"
             logger.error(error_msg)
             raise ADORequestError(error_msg) from e
+
+    async def get_pull_requests_window(self, project, repository_id, start, end):
+        from plumbline.providers.ado import _time
+        def candidate(pr):
+            if not isinstance(pr, dict):
+                return True
+            created = _time(pr.get("creationDate"))
+            closed = _time(pr.get("closedDate"))
+            if created is None or (pr.get("closedDate") is not None and closed is None):
+                return True
+            return created < end and (closed is None or closed >= start)
+        return await self.get_pull_requests(project, repository_id, None, candidate=candidate)
+
+    async def get_builds_window(self, project, start, end, observed_at):
+        from datetime import timedelta
+        from plumbline.providers.ado import _time
+
+        def candidate(build):
+            if not isinstance(build, dict):
+                return True
+            finish = _time(build.get("finishTime"))
+            if finish is not None:
+                return start <= finish < end
+            if build.get("finishTime") is None and observed_at >= end and str(build.get("status", "")).lower() in {"inprogress", "notstarted", "postponed", "cancelling"}:
+                return False
+            return True
+
+        return await self.builds.get_builds(project, from_date=(start - timedelta(microseconds=1)).isoformat(), candidate=candidate)
 
     async def get_builds(self, project: str, project_name: Optional[str] = None, from_date: Optional[str] = None) -> List[Dict[str, Any]]:
         return await self.builds.get_builds(project, project_name, from_date)

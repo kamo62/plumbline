@@ -1,4 +1,5 @@
 """Connection API. Host must install the existing auth guard."""
+from typing import Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -6,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, f
 from sqlmodel import select
 
 from plumbline.auth.service import event
-from plumbline.config.access import validate_org
+from plumbline.providers.registry import UnsupportedProvider, get_provider, normalise_projects, provider_metadata
 from .models import Connection
 from .service import CredentialError, encrypt, lock, run_doctor
 
@@ -18,9 +19,22 @@ class Config(BaseModel):
     @field_validator("projects")
     @classmethod
     def projects_valid(cls, projects):
-        if any(not p.strip() or len(p) > 128 or any(ord(c) < 32 for c in p) for p in projects):
-            raise ValueError("Invalid project")
-        return projects
+        return normalise_projects(projects)
+
+
+class ProviderRequirements(BaseModel):
+    organisation: Literal["required", "not_supported"]
+    projects: Literal["required", "optional"]
+    credential: Literal["required_for_execution", "not_supported"]
+
+
+class ProviderMetadata(BaseModel):
+    id: str
+    label: str
+    status: Literal["implemented_live_unverified", "diagnostic_only"] = Field(
+        description="diagnostic_only identifies synthetic development evidence, including queued collections; it does not disable runs")
+    capabilities: list[str] = Field(description="Implemented evidence families; not a guarantee of complete or live-verified evidence")
+    requirements: ProviderRequirements
 
 
 class Create(BaseModel):
@@ -55,18 +69,21 @@ async def parse(request, model):
 
 
 def validate(provider, name, organisation, config, credential_present):
-    if provider not in {"ado", "synthetic"} or not name.strip():
+    if not name.strip():
         raise HTTPException(422, "Invalid connection input")
-    if provider == "ado":
-        try:
-            organisation = validate_org(organisation or "")
-        except ValueError:
-            raise HTTPException(422, "Invalid organisation") from None
-        if not config.projects:
-            raise HTTPException(422, "ADO requires at least one project")
-    elif organisation is not None or credential_present:
-        raise HTTPException(422, "Synthetic connections do not accept organisation or credentials")
+    spec = supported_provider(provider)
+    try:
+        organisation, _ = spec.connection_inputs(organisation, config.model_dump(), credential_present)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from None
     return organisation
+
+
+def supported_provider(provider):
+    try:
+        return get_provider(provider)
+    except UnsupportedProvider:
+        raise HTTPException(422, "Connection provider is unsupported") from None
 
 
 def view(item):
@@ -78,6 +95,12 @@ def view(item):
 
 def create_router(db_dependency):
     router = APIRouter(prefix="/connections", tags=["connections"])
+
+    @router.get("/providers", response_model=list[ProviderMetadata])
+    def providers(request: Request):
+        if not getattr(request.state, "principal", None):
+            raise HTTPException(401, "Authentication required")
+        return provider_metadata()
 
     @router.get("")
     def list_connections(request: Request, db=Depends(db_dependency)):
@@ -116,10 +139,15 @@ def create_router(db_dependency):
         item = db.get(Connection, connection_id)
         if not item:
             raise HTTPException(404, "Connection not found")
+        supported_provider(item.provider)
         name = body.name if body.name is not None else item.name
         organisation = body.organisation if body.organisation is not None else item.organisation
-        config = body.config if body.config is not None else Config.model_validate(item.config)
-        organisation = validate(item.provider, name, organisation, config, body.credential is not None)
+        try:
+            config = body.config if body.config is not None else Config.model_validate(item.config)
+        except ValidationError:
+            raise HTTPException(422, "Invalid connection input") from None
+        organisation = validate(item.provider, name, organisation, config,
+                                body.credential is not None or item.credential_ciphertext is not None)
         if body.credential is not None:
             try:
                 item.credential_ciphertext = encrypt(body.credential.get_secret_value())
@@ -138,6 +166,7 @@ def create_router(db_dependency):
         item = db.get(Connection, connection_id)
         if not item:
             raise HTTPException(404, "Connection not found")
+        supported_provider(item.provider)
         # Snapshot the inputs, then release the read transaction during network I/O.
         snapshot = (item.provider, item.organisation, item.config.copy(), item.credential_ciphertext)
         db.expunge(item)
@@ -145,6 +174,8 @@ def create_router(db_dependency):
         try:
             result = await run_doctor(item)
             status = "issues" if any(c[1] in {"failed", "partial", "unavailable"} for c in result["checks"]) else "passed"
+        except UnsupportedProvider:
+            raise HTTPException(422, "Connection provider is unsupported") from None
         except CredentialError:
             result, status = {"capabilities": [], "checks": [("connection", "failed", "credential_unavailable", 1)]}, "failed"
         except Exception:
